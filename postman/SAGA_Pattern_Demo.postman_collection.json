@@ -1,0 +1,175 @@
+{
+	"info": {
+		"_postman_id": "9b1285cb-42b7-4c74-a698-f2b7407519bf",
+		"name": "SAGA Pattern Microservices Demo",
+		"description": "Collection for 15-minute seminar demonstrating SAGA Pattern (Orchestration with Compensation) in Spring Boot",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "0. System Management",
+			"item": [
+				{
+					"name": "Reset All System State",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/system/reset",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "system", "reset"]
+						}
+					}
+				},
+				{
+					"name": "Get System Live Snapshot",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/system/snapshot",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "system", "snapshot"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "1. Scenario 1 - Happy Path (Success)",
+			"item": [
+				{
+					"name": "Order MacBook Pro (Rich Customer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"CUST-RICH\",\n  \"productId\": \"PROD-001\",\n  \"quantity\": 1,\n  \"amount\": 2000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Scenario 2 - SAGA Compensation (Rollback)",
+			"item": [
+				{
+					"name": "Order iPhone (Insufficient Funds -> Rollback Stock)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"CUST-POOR\",\n  \"productId\": \"PROD-002\",\n  \"quantity\": 1,\n  \"amount\": 1000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Scenario 3 - Out of Stock (Fail at Step 1)",
+			"item": [
+				{
+					"name": "Order PS5 Pro (Out of stock)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"CUST-RICH\",\n  \"productId\": \"PROD-OUT-OF-STOCK\",\n  \"quantity\": 1,\n  \"amount\": 600.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Direct Microservice Inspection",
+			"item": [
+				{
+					"name": "Inventory - List All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/api/inventory",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["api", "inventory"]
+						}
+					}
+				},
+				{
+					"name": "Payment - List All Wallets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/api/payment",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8083",
+							"path": ["api", "payment"]
+						}
+					}
+				},
+				{
+					"name": "Orders - List All Orders with Trace Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders"]
+						}
+					}
+				}
+			]
+		}
+	]
+}
+
