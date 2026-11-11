@@ -24,7 +24,7 @@ class Rule3_PaymentIdempotencyTest {
     }
 
     @Test
-    @DisplayName("BUG-3 (Without Idempotency): Duplicate debit charges customer twice")
+    @DisplayName("BUG-3 (Lost Update): Retry overwrites previous state and charges customer twice")
     void bug3_withoutIdempotencyChargesTwice() {
         PaymentRequest req = new PaymentRequest("ORD-DUP", "CUST-RICH", new BigDecimal("2000.00"));
 

@@ -23,7 +23,7 @@ class Rule2_SemanticLockIsolationTest {
     void noop() {}
 
     @Test
-    @DisplayName("Rule 2 fixes BUG-2: Mid-flight observation sees reservedStock=1 & Order=PENDING before Confirm")
+    @DisplayName("Rule 2 fixes BUG-2 (Dirty Read): Concurrent reader mid-flight sees reservedStock=1 & Order=PENDING before Confirm")
     void midFlightStateShowsSemanticLock() {
         AtomicInteger observedReservedMidFlight = new AtomicInteger(-1);
         AtomicReference<OrderStatus> observedOrderMidFlight = new AtomicReference<>();

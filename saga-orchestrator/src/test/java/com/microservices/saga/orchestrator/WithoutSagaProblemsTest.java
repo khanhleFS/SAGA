@@ -41,7 +41,7 @@ class WithoutSagaProblemsTest {
     }
 
     @Test
-    @DisplayName("BUG-2 (Dirty Read): Direct deduction via /deduct leaves reservedStock = 0")
+    @DisplayName("BUG-2 (Dirty Read): Concurrent reader sees stock deducted (5->4) with reservedStock = 0 while order is still unpaid")
     void bug2_noSemanticLock() {
         fake.paymentShouldSucceed = false;
 

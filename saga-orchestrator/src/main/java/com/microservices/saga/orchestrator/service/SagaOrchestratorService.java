@@ -126,7 +126,7 @@ public class SagaOrchestratorService {
         if (simulateDuplicateCalls) {
             InventoryResponse dupInv = callReserveInventory(orderId, request.getProductId(), request.getQuantity(), false, false);
             saga.addSagaLog(new SagaStepLog("inventory-service :8082", SagaStepStatus.SUCCESS,
-                    "POST /api/inventory/reserve [retry orderId=" + orderId + "] -> " + (dupInv != null ? dupInv.getMessage() : "OK")));
+                    "POST /api/inventory/reserve [RETRY orderId=" + orderId + "] -> 🛡️ Operation Log chặn ghi đè: " + (dupInv != null ? dupInv.getMessage() : "OK")));
         }
 
         sleepForDemo(delayBeforePaymentMs, saga);
@@ -147,7 +147,7 @@ public class SagaOrchestratorService {
         if (simulateDuplicateCalls) {
             PaymentResponse dupPay = callProcessPayment(orderId, request.getCustomerId(), request.getAmount(), false);
             saga.addSagaLog(new SagaStepLog("payment-service :8083", SagaStepStatus.SUCCESS,
-                    "POST /api/payment/debit [retry orderId=" + orderId + "] -> " + (dupPay != null ? dupPay.getMessage() : "OK")));
+                    "POST /api/payment/debit [RETRY orderId=" + orderId + "] -> 🛡️ Operation Log chặn ghi đè: " + (dupPay != null ? dupPay.getMessage() : "OK")));
         }
 
         // STEP 4: Confirm Inventory & Order
@@ -251,17 +251,17 @@ public class SagaOrchestratorService {
 
         InventoryResponse inv1 = callReserveInventory(orderId, request.getProductId(), request.getQuantity(), true, false);
         saga.addSagaLog(new SagaStepLog("inventory-service :8082", SagaStepStatus.SUCCESS,
-                "POST /api/inventory/reserve [attempt 1] -> " + (inv1 != null ? inv1.getMessage() : "OK")));
+                "POST /api/inventory/reserve [Lần 1] -> " + (inv1 != null ? inv1.getMessage() : "OK")));
         InventoryResponse inv2 = callReserveInventory(orderId, request.getProductId(), request.getQuantity(), true, false);
-        saga.addSagaLog(new SagaStepLog("inventory-service :8082", SagaStepStatus.PENDING,
-                "POST /api/inventory/reserve [attempt 2, orderId=" + orderId + "] -> " + (inv2 != null ? inv2.getMessage() : "OK")));
+        saga.addSagaLog(new SagaStepLog("inventory-service :8082", SagaStepStatus.FAILED,
+                "POST /api/inventory/reserve [RETRY Lần 2 đè Lần 1, orderId=" + orderId + "] -> 🚨 LOST UPDATE (Trừ kho lần 2): " + (inv2 != null ? inv2.getMessage() : "OK")));
 
         PaymentResponse pay1 = callProcessPayment(orderId, request.getCustomerId(), request.getAmount(), true);
         saga.addSagaLog(new SagaStepLog("payment-service :8083", SagaStepStatus.SUCCESS,
-                "POST /api/payment/debit [attempt 1] -> " + (pay1 != null ? pay1.getMessage() : "OK")));
+                "POST /api/payment/debit [Lần 1] -> " + (pay1 != null ? pay1.getMessage() : "OK")));
         PaymentResponse pay2 = callProcessPayment(orderId, request.getCustomerId(), request.getAmount(), true);
-        saga.addSagaLog(new SagaStepLog("payment-service :8083", SagaStepStatus.PENDING,
-                "POST /api/payment/debit [attempt 2, orderId=" + orderId + "] -> " + (pay2 != null ? pay2.getMessage() : "OK")));
+        saga.addSagaLog(new SagaStepLog("payment-service :8083", SagaStepStatus.FAILED,
+                "POST /api/payment/debit [RETRY Lần 2 đè Lần 1, orderId=" + orderId + "] -> 🚨 LOST UPDATE (Trừ tiền lần 2): " + (pay2 != null ? pay2.getMessage() : "OK")));
 
         if (pay1 != null && pay1.isSuccess() && pay2 != null && pay2.isSuccess()) {
             callConfirmInventory(orderId, request.getProductId(), request.getQuantity());
@@ -340,7 +340,7 @@ public class SagaOrchestratorService {
         if (delayMs <= 0) return;
         long clamped = Math.min(delayMs, 5000);
         saga.addSagaLog(new SagaStepLog("saga-orchestrator :8080", SagaStepStatus.PENDING,
-                "Waiting " + clamped + "ms before dispatching payment-service debit..."));
+                "⏸️ [Khách A đang chờ thanh toán " + clamped + "ms] Đơn A đã qua bước Kho nhưng CHƯA gọi Payment..."));
         try {
             Thread.sleep(clamped);
         } catch (InterruptedException e) {

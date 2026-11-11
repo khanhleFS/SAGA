@@ -23,7 +23,7 @@ class Rule3_InventoryIdempotencyTest {
     }
 
     @Test
-    @DisplayName("BUG-3 (Without Idempotency): Duplicate reserve calls deduct stock twice")
+    @DisplayName("BUG-3 (Lost Update): Retry overwrites previous state and deducts stock twice")
     void bug3_withoutIdempotencyDeductsTwice() {
         InventoryRequest req = new InventoryRequest("ORD-DUP", "PROD-002", 1);
 

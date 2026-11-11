@@ -1065,29 +1065,29 @@
             {
                 id: 'case1',
                 beforeBadge: 'BUG-1 • Partial Commit',
-                beforeTitle: '1. Thiếu tiền -> Lệch kho',
+                beforeTitle: '1. Partial Commit (Thiếu tiền -> Lệch kho)',
                 beforeDesc: 'CUST-POOR mua iPhone ($1,000). Payment lỗi nhưng kho đã trừ không hoàn tác.',
                 afterBadge: 'Countermeasure 1 • Compensation',
-                afterTitle: '1. LIFO Compensation + Commutative',
+                afterTitle: '1. Vá Partial Commit (LIFO Compensation)',
                 afterDesc: 'Payment lỗi -> Nhả kho (+1) rồi hủy đơn (CANCELLED). Kho về nguyên trạng.'
             },
             {
                 id: 'case2',
                 beforeBadge: 'BUG-2 • Dirty Read',
-                beforeTitle: '2. Đọc nhầm dữ liệu chưa xong',
-                beforeDesc: 'Gọi /deduct trừ thẳng availableStock (reserved=0) khi đơn chưa thanh toán.',
+                beforeTitle: '2. Dirty Read (Khách B đọc khi A chưa trả tiền)',
+                beforeDesc: 'Khách A đang thanh toán dở, Khách B đọc vào thấy kho đã trừ đứt (reserved=0) mà không biết đang giao dịch.',
                 afterBadge: 'Countermeasure 2 • Semantic Lock',
-                afterTitle: '2. Semantic Lock (PENDING/RESERVED)',
-                afterDesc: 'Gọi /reserve khóa tạm vào reservedStock giữa luồng trước khi chốt.'
+                afterTitle: '2. Vá Dirty Read (Semantic Lock)',
+                afterDesc: 'Khách A đang chạy thì đánh dấu reservedStock=1 & PENDING -> Khách B đọc vào biết ngay hàng đang giữ tạm.'
             },
             {
                 id: 'case3',
-                beforeBadge: 'BUG-3 • Conflicting Retry',
-                beforeTitle: '3. Gửi trùng -> Trừ x2',
-                beforeDesc: 'Thiếu Operation Log theo orderId: mạng retry gửi lại làm trừ kho/ví 2 lần.',
-                afterBadge: 'Countermeasure 3 • Op Log (Mở rộng)',
-                afterTitle: '3. Operation Log (Idempotency)',
-                afterDesc: 'Áp dụng mở rộng Version File theo orderId: gọi lại N lần vẫn chỉ xử lý đúng 1 lần.'
+                beforeBadge: 'BUG-3 • Lost Update',
+                beforeTitle: '3. Lost Update (Retry đè -> Trừ 2 lần tiền)',
+                beforeDesc: 'Mạng retry gửi lại lệnh: lần 2 đè lên lần 1 làm mất trạng thái cũ và trừ ví/kho gấp đôi.',
+                afterBadge: 'Countermeasure 3 • Operation Log',
+                afterTitle: '3. Vá Lost Update (Operation Log / Idempotency)',
+                afterDesc: 'Lưu vết orderId vào Operation Log: retry đè vào sẽ bị chặn lại, chỉ trừ tiền & kho đúng 1 lần.'
             },
             {
                 id: 'happy',
@@ -1287,7 +1287,7 @@
             return (snap.orderRecords || []).find(o => o.orderId === orderId);
         }
 
-        function streamServerLogs(orderRes) {
+        function streamServerLogs(orderRes, midSnap = null, payload = null, isBefore = false) {
             if (orderRes.sagaLogs) {
                 orderRes.sagaLogs.forEach(l => {
                     let logType = 'info';
@@ -1297,6 +1297,32 @@
                     else if (l.status === 'COMPENSATING' || l.status === 'COMPENSATED') { logType = 'compensate'; lvl = 'WARN '; }
                     else if (l.status === 'PENDING') { logType = 'warn'; lvl = 'WARN '; }
                     appendLog(l.details, logType, lvl, l.stepName, l.timestamp);
+
+                    // Chèn log của Khách B đọc chen ngang ngay đúng thời điểm Khách A đang dừng chờ thanh toán (giữa T2 và T3)
+                    if (midSnap && payload && (l.details.includes('Waiting') || l.details.includes('Khách A đang chờ thanh toán'))) {
+                        const midProd = findProduct(midSnap, payload.productId);
+                        const midOrd = findOrderRecord(midSnap, orderRes.orderId);
+                        const avail = midProd ? midProd.availableStock : 'N/A';
+                        const resv = midProd ? midProd.reservedStock : 'N/A';
+                        const ordSt = midOrd ? midOrd.status : 'N/A';
+
+                        appendLog(
+                            `👀 [Khách B đọc chen ngang lúc A chưa trả tiền] GET /api/inventory/${payload.productId} -> available=${avail}, reserved=${resv}, Order=${ordSt}`,
+                            'warn', 'WARN ', 'khach-B-reader :8082', l.timestamp
+                        );
+
+                        if (resv === 0) {
+                            appendLog(
+                                `🚨 [DIRTY READ!] Khách B đọc thấy available=${avail}, reserved=0 -> B tưởng hàng đã bán đứt hoàn toàn dù Khách A chưa thanh toán!`,
+                                'error', 'ERROR', 'khach-B-reader :8082', l.timestamp
+                            );
+                        } else {
+                            appendLog(
+                                `🔒 [SEMANTIC LOCK!] Khách B đọc thấy reservedStock=${resv} (Đang Giữ) & Order=${ordSt} -> B biết hàng đang khóa tạm bởi A, chưa bán đứt!`,
+                                'success', 'INFO ', 'khach-B-reader :8082', l.timestamp
+                            );
+                        }
+                    }
                 });
             }
             appendLog(`Response HTTP 200 -> orderId=${orderRes.orderId}, finalStatus=${orderRes.status}`,
@@ -1366,8 +1392,6 @@
                                 midSnap = await getSnapshot();
                                 renderInventory(midSnap.inventory);
                                 renderOrders(midSnap.orders);
-                                const midProd = findProduct(midSnap, payload.productId);
-                                appendLog(`GET /api/system/snapshot -> available=${midProd?.availableStock}, reserved=${midProd?.reservedStock}`, 'warn', 'INFO ', 'mid-flight check');
                             } finally {
                                 resolve();
                             }
@@ -1380,7 +1404,7 @@
                 const orderRes = await res.json();
                 const afterSnap = await getSnapshot();
 
-                streamServerLogs(orderRes);
+                streamServerLogs(orderRes, midSnap, payload, isBefore);
 
                 const verdict = evaluateTestCase(caseId, payload, orderRes, beforeSnap, midSnap, afterSnap);
                 renderTestCaseVerdict(verdict);
@@ -1436,23 +1460,23 @@
                 const hadSemanticLock = mProd && mProd.reservedStock === payload.quantity;
                 const hadPendingOrder = mOrd && mOrd.status === 'PENDING';
                 assertions.push({
-                    title: 'Giữa luồng chạy phải dùng Semantic Lock (reservedStock = 1)',
+                    title: 'Khi Giao dịch B đọc chen ngang: Kho phải báo đang giữ tạm (reservedStock = 1)',
                     pass: !!hadSemanticLock,
-                    detail: `Mid-flight Expected reserved=${payload.quantity} | Actual reserved=${mProd ? mProd.reservedStock : 'N/A'} (available=${mProd ? mProd.availableStock : 'N/A'})`
+                    detail: `Giao dịch B đọc lúc A chưa trả tiền -> Expected reserved=${payload.quantity} | Actual reserved=${mProd ? mProd.reservedStock : 'N/A'} (available=${mProd ? mProd.availableStock : 'N/A'})`
                 });
                 assertions.push({
-                    title: 'Order giữ trạng thái PENDING trong lúc giao dịch chưa kết thúc',
+                    title: 'Khi Giao dịch B đọc chen ngang: Đơn A phải gắn cờ khóa tạm (Order = PENDING)',
                     pass: !!hadPendingOrder,
-                    detail: `Mid-flight Expected Order=PENDING | Actual=${mOrd ? mOrd.status : 'N/A'}`
+                    detail: `Giao dịch B đọc lúc A chưa trả tiền -> Expected Order=PENDING | Actual=${mOrd ? mOrd.status : 'N/A'}`
                 });
                 const ok = !!hadSemanticLock && !!hadPendingOrder;
                 return {
                     ok,
                     tag: ok ? 'PASS • SEMANTIC LOCK' : 'DIRTY READ DETECTED',
-                    headline: ok ? 'Đã vá bằng Semantic Lock (PENDING / RESERVED)' : 'PHÁT HIỆN BUG-2: Dirty Read (Trừ thẳng kho thật)!',
+                    headline: ok ? 'Đã vá Dirty Read bằng Semantic Lock (PENDING / RESERVED)' : 'PHÁT HIỆN BUG-2: Dirty Read (Giao dịch B đọc phải dữ liệu chưa chốt)!',
                     explain: ok
-                        ? 'Ở thời điểm giữa giao dịch, hàng được đánh dấu khóa tạm trong cột "Đang Giữ" (reserved=1), ngăn đọc nhầm dữ liệu chưa chốt.'
-                        : 'Gọi /deduct trừ thẳng vào availableStock (reserved=0): giao dịch khác đọc vào tưởng hàng đã bán đứt dù chưa thanh toán!',
+                        ? 'Lúc Giao dịch A đang chờ thanh toán, Giao dịch B nhảy vào đọc thấy reservedStock=1 (Đang Giữ) -> B biết ngay hàng chỉ đang khóa tạm, chưa bán đứt.'
+                        : 'Lúc Giao dịch A chưa thanh toán xong, Giao dịch B nhảy vào đọc thấy available=4, reserved=0 -> B bị Dirty Read (tưởng hàng đã bán đứt dù A chưa trả tiền và có thể hủy)!',
                     assertions
                 };
             }
@@ -1463,23 +1487,23 @@
                 const walletOnce = Math.abs(aWal.balance - expectedBalance) < 0.01;
                 const stockOnce = aProd.availableStock === expectedStock && aProd.reservedStock === 0;
                 assertions.push({
-                    title: 'Gọi trùng debit 2 lần cùng orderId chỉ được trừ tiền 1 lần',
+                    title: 'Chống Lost Update ở Ví: Retry đè vào không được trừ tiền 2 lần',
                     pass: walletOnce,
-                    detail: `Expected balance=$${expectedBalance.toFixed(2)} | Actual=$${aWal.balance.toFixed(2)} (Mất $${(bWal.balance - aWal.balance).toFixed(2)})`
+                    detail: `Expected balance=$${expectedBalance.toFixed(2)} | Actual=$${aWal.balance.toFixed(2)} (Đã bị trừ $${(bWal.balance - aWal.balance).toFixed(2)})`
                 });
                 assertions.push({
-                    title: 'Gọi trùng reserve 2 lần cùng orderId chỉ được trừ kho 1 lần',
+                    title: 'Chống Lost Update ở Kho: Retry đè vào không được trừ kho 2 lần',
                     pass: stockOnce,
                     detail: `Expected stock=${expectedStock} | Actual available=${aProd.availableStock}, reserved=${aProd.reservedStock}`
                 });
                 const ok = walletOnce && stockOnce;
                 return {
                     ok,
-                    tag: ok ? 'PASS • OPERATION LOG' : 'DUPLICATE BUG DETECTED',
-                    headline: ok ? 'Đã vá bằng Operation Log / Idempotency (Áp dụng mở rộng Version File)' : 'PHÁT HIỆN BUG-3: Conflicting / Duplicate Updates (Trừ x2)!',
+                    tag: ok ? 'PASS • OPERATION LOG' : 'LOST UPDATE DETECTED',
+                    headline: ok ? 'Đã vá Lost Update bằng Operation Log / Idempotency' : 'PHÁT HIỆN BUG-3: Lost Update (Retry ghi đè làm trừ 2 lần tiền)!',
                     explain: ok
-                        ? 'Operation Log (mở rộng từ Version File theo orderId) ghi nhận giao dịch đã xử lý -> trả về Idempotent OK, không trừ lặp lại.'
-                        : `Do thiếu Operation Log theo orderId, retry làm khách bị trừ $${(bWal.balance - aWal.balance).toFixed(2)} (gấp đôi!) và kho bị giữ dư 1 máy!`,
+                        ? 'Nhờ lưu Operation Log theo orderId, lần retry thứ 2 phát hiện đơn đã xử lý nên không ghi đè lên kết quả lần 1 -> chỉ trừ tiền 1 lần.'
+                        : `Lần retry thứ 2 chạy đè lên trạng thái đã trừ của lần 1 (Lost Update) làm khách bị trừ $${(bWal.balance - aWal.balance).toFixed(2)} (2 lần tiền!) và mất 2 máy trong kho!`,
                     assertions
                 };
             }
@@ -1854,14 +1878,14 @@ Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────
                                 </tr>
                                 <tr>
                                     <td><strong>Case 2</strong></td>
-                                    <td><span class="doc-tag-bug">BUG-2: Dirty Read / Mất Isolation</span><br>Gọi <code>POST /api/inventory/deduct</code> trừ thẳng vào <code>availableStock</code> (<code>reservedStock = 0</code>). Bên ngoài nhìn vào thấy kho bị trừ đứt dù đơn chưa thanh toán.</td>
-                                    <td><span class="doc-tag-fix">Semantic Lock (PENDING / RESERVED)</span><br>Gọi <code>POST /api/inventory/reserve</code> giữ tạm vào <code>reservedStock</code>, <code>Order = PENDING</code>. Chỉ bước cuối mới <code>Confirm</code> hoặc <code>Release</code>.</td>
+                                    <td><span class="doc-tag-bug">BUG-2: Dirty Read (Giao dịch B đọc khi A chưa chốt)</span><br>Giao dịch A trừ thẳng <code>availableStock</code> (<code>reservedStock = 0</code>) khi chưa thanh toán. Giao dịch B nhảy vào đọc giữa chừng thấy kho đã trừ đứt mà không biết A chỉ đang giao dịch dở.</td>
+                                    <td><span class="doc-tag-fix">Semantic Lock (PENDING / RESERVED)</span><br>Giao dịch A giữ tạm vào <code>reservedStock = 1</code>, <code>Order = PENDING</code>. Khi Giao dịch B đọc vào lúc A đang chạy sẽ biết hàng đang khóa tạm, chưa bán đứt.</td>
                                     <td><code>WithoutSagaProblemsTest</code>, <code>Rule2_SemanticLockIsolationTest</code></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Case 3</strong></td>
-                                    <td><span class="doc-tag-bug">BUG-3: Conflicting / Duplicate Updates</span><br>Không ghi Version/Operation Log theo <code>orderId</code> &rarr; mạng timeout gửi trùng lệnh làm trừ kho &amp; ví <strong>2 lần</strong>.</td>
-                                    <td><span class="doc-tag-fix">Version File / Operation Log <em>(Áp dụng mở rộng: Idempotency)</em></span><br>Định nghĩa gốc ghi nhật ký thao tác để sắp xếp lại đúng thứ tự; trong Demo mở rộng lưu trạng thái từng <code>orderId</code> (<code>RESERVED</code>, <code>CONFIRMED</code>, <code>COMPENSATED</code>, <code>DEBITED</code>, <code>REFUNDED</code>) để chống trùng lệnh khi retry. Gọi <em>N</em> lần vẫn chỉ đổi dữ liệu đúng 1 lần.</td>
+                                    <td><span class="doc-tag-bug">BUG-3: Lost Update (Retry ghi đè / Trừ 2 lần tiền)</span><br>Mạng timeout làm retry gửi lại lệnh: lần 2 chạy đè lên trạng thái đã trừ của lần 1 &rarr; mất trạng thái đúng và trừ kho &amp; ví <strong>2 lần</strong>.</td>
+                                    <td><span class="doc-tag-fix">Version File / Operation Log <em>(Idempotency)</em></span><br>Lưu trạng thái từng <code>orderId</code> vào Operation Log (<code>RESERVED</code>, <code>CONFIRMED</code>, <code>COMPENSATED</code>, <code>DEBITED</code>, <code>REFUNDED</code>) để chặn retry ghi đè. Gọi <em>N</em> lần vẫn chỉ trừ tiền đúng 1 lần.</td>
                                     <td><code>Rule3_InventoryIdempotencyTest</code>, <code>Rule3_PaymentIdempotencyTest</code></td>
                                 </tr>
                             </tbody>
