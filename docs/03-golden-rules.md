@@ -1,43 +1,31 @@
-# 3. Golden Rules khi viết microservice tham gia Saga
+# 3. 3 Test Cases Đối Chứng: Data Anomalies (Trước) vs Countermeasures (Sau)
 
-| # | Rule | Ý nghĩa |
-|---|---|---|
-| 1 | **Mỗi bước có một compensation** | Giữ phòng thì nhả phòng, trừ tiền thì refund. |
-| 2 | **Compensation là rollback nghiệp vụ** | Không phải rollback DB, vì bước trước đã commit. |
-| 3 | **Idempotent** | Nhận cùng một request nhiều lần thì kết quả như một lần. Dùng `orderId` làm idempotency key. |
-| 4 | **Compensation phải thành công** | Retry (backoff), Dead Letter Queue hoặc cảnh báo để xử lý thủ công. |
-| 5 | **Bước dễ lỗi đặt trước, bước khó hoàn tác đặt sau** | Giữ chỗ trước, thu tiền sau, để ít phải refund. |
-| 6 | **Giữ chỗ tạm trước khi chốt** | Dùng `PENDING`/`RESERVED` để giảm xung đột do thiếu Isolation. |
-| 7 | **Lưu trạng thái Saga** | Biết đang ở bước nào và recover được khi orchestrator crash. |
-| 8 | **Chấp nhận eventual consistency** | Trạng thái trung gian là bình thường, kết quả cuối mới nhất quán. |
-| 9 | **Mỗi service sở hữu dữ liệu riêng, không dùng foreign key giữa service** | Tham chiếu bằng ID. Khi demo có thể dùng chung 1 DB, nhưng vẫn không đặt FK giữa các service. |
+Bám sát tài liệu chuẩn ở [01-problem-context.md](01-problem-context.md) và [02-saga-pattern.md](02-saga-pattern.md), code demo chứng minh trực tiếp **3 cặp đối chứng** (cùng nút **Happy Path**):
 
-## Ví dụ: đặt phòng khách sạn
-`Booking(PENDING) → Reservation (giữ phòng) → Payment → Booking(CONFIRMED)`
+| Case | Bất thường / Lỗi khi CHƯA có SAGA (Before) | Chiến lược vá lỗi trong SAGA (After) | Test Class chứng minh |
+|---|---|---|---|
+| **Case 1** | **BUG-1: Partial Commit**<br>Payment lỗi nhưng `Order` & `Inventory` đã commit trước đó không tự hoàn tác $\rightarrow$ kho mất hàng, đơn treo. | **Compensating Transaction (LIFO) + Commutative Updates**<br>Orchestrator chạy bù trừ ngược `Release Inventory (+qty)` $\rightarrow$ `Cancel Order`. | `WithoutSagaProblemsTest`, `Rule1_AtomicityAndCompensationTest` |
+| **Case 2** | **BUG-2: Dirty Read / Mất Isolation**<br>Gọi `POST /api/inventory/deduct` trừ thẳng vào `availableStock` (`reservedStock = 0`). Bên ngoài nhìn vào thấy kho bị trừ đứt dù đơn chưa thanh toán. | **Semantic Lock (`PENDING` / `RESERVED`)**<br>Gọi `POST /api/inventory/reserve` giữ tạm vào `reservedStock`, `Order = PENDING`. Chỉ bước cuối mới `Confirm` hoặc `Release`. | `WithoutSagaProblemsTest`, `Rule2_SemanticLockIsolationTest` |
+| **Case 3** | **BUG-3: Conflicting / Duplicate Updates**<br>Không ghi Version/Operation Log theo `orderId` $\rightarrow$ mạng timeout gửi trùng lệnh làm trừ kho & ví **2 lần**. | **Version Files / Operation Log (Idempotency)**<br>Lưu trạng thái từng `orderId` (`RESERVED`, `CONFIRMED`, `COMPENSATED`, `DEBITED`, `REFUNDED`). Gọi $N$ lần vẫn chỉ đổi dữ liệu đúng 1 lần. | `Rule3_InventoryIdempotencyTest`, `Rule3_PaymentIdempotencyTest` |
 
-| Tình huống | Xử lý |
-|---|---|
-| Phòng đã bị người khác đặt | Reservation lỗi → `Booking(CANCELLED)` → báo user. Chưa thu tiền nên không cần refund. |
-| Payment lỗi sau khi giữ phòng | Bù trừ: nhả phòng → `Booking(CANCELLED)`. |
-| Phòng bị mất sau khi đã trả tiền | Bù trừ ngược: **Refund** → hủy booking → báo user. |
+---
 
-## Các rule này nằm ở đâu trong code?
-| Rule | Trạng thái trong project |
-|---|---|
-| 1, 2 | Có: `reserveStock`/`compensateReleaseStock`, `debitCustomer`/`compensateRefund` |
-| 3 | Mới có ở phần compensation. **Forward step (`reserve`, `debit`) chưa idempotent.** |
-| 4 | Chưa có retry. Nếu bù trừ lỗi, hệ thống chỉ ghi log "manual intervention". |
-| 5 | Có: reserve kho trước, trừ tiền sau |
-| 6 | Có: `availableStock`/`reservedStock` |
-| 7 | Chỉ lưu in-memory (`orderRepository`), chưa lưu DB |
-| 8, 9 | Là hướng thiết kế. Dữ liệu hiện chưa dùng DB. |
+## Chi tiết luồng thực thi
 
-## FAQ nhanh
-**Saga có đủ ACID không?**
-Có A (nhờ bù trừ), C (eventual), D (đã commit). **Không có I (Isolation).**
+### Case 1 — Partial Commit vs LIFO Compensation
+- **Trước SAGA (`POST /api/orders/without-saga?mode=partial_commit`):** `CUST-POOR` ($50) đặt `PROD-002` ($1,000). Kho bị trừ (`5 -> 4`), Payment lỗi, luồng dừng luôn $\rightarrow$ kho mất 1 máy, đơn treo `PENDING`.
+- **Sau SAGA (`POST /api/orders`):** Orchestrator lưu các bước bù trừ vào `Deque<Compensation>`. Khi `Payment` lỗi, `abort()` chạy ngược: `Release Inventory` (`4 -> 5`) $\rightarrow$ `Cancel Order` (`CANCELLED`).
 
-**Bù trừ bị lỗi thì sao?**
-Retry với backoff, đẩy vào DLQ nếu quá số lần, cảnh báo ops xử lý thủ công.
+### Case 2 — Dirty Read vs Semantic Lock
+- **Trước SAGA (`POST /api/orders/without-saga?mode=no_semantic_lock`):** Gọi `POST /api/inventory/deduct` trừ thẳng `availableStock` (`5 -> 4, reserved = 0`). Không đánh dấu trạng thái giữ tạm cho giao dịch đang chạy.
+- **Sau SAGA (`POST /api/orders?delayBeforePaymentMs=1400`):** Gọi `POST /api/inventory/reserve` chuyển sang `available = 4, reserved = 1` và `Order = PENDING` (**Semantic Lock**). Nếu bước sau thành công mới xóa `reservedStock` (Confirm), nếu lỗi thì trả lại `availableStock`.
 
-**Vì sao cần idempotency?**
-Timeout hoặc retry có thể khiến một lệnh bị gửi nhiều lần. Service phải cho kết quả giống nhau dù chạy 1 hay N lần.
+### Case 3 — Duplicate Updates vs Operation Log (Idempotency)
+- **Trước SAGA (`POST /api/orders/without-saga?mode=duplicate_request`):** Gửi lặp lại `reserve` và `debit` 2 lần cho cùng `orderId` $\rightarrow$ kho mất 2 máy, ví bị trừ gấp đôi (`$5,000 -> $1,000`).
+- **Sau SAGA (`POST /api/orders/duplicate-check`):** `InventoryService` kiểm tra `reservationStates`, `PaymentService` kiểm tra `paymentStates` theo `orderId` $\rightarrow$ lần gọi thứ 2 trả về `Idempotent OK`, dữ liệu chỉ thay đổi đúng 1 lần (`$5,000 -> $3,000`, kho trừ 1).
+
+---
+
+## Ghi chú thiết kế đi kèm (Pessimistic View & Resilience)
+- **Pessimistic View (Step Ordering):** Luồng chuẩn luôn đặt `Inventory` trước `Payment -> Confirm` để hạn chế tối đa việc phải hoàn tiền.
+- **Retry & DLQ:** Trong thực tế cần kết hợp retry (Orchestrator có sẵn `executeWithRetry`) và Dead Letter Queue cho các lệnh bù trừ.

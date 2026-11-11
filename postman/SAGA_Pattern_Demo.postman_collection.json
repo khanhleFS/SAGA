@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "9b1285cb-42b7-4c74-a698-f2b7407519bf",
-		"name": "SAGA Pattern Microservices Demo",
-		"description": "Collection for 15-minute seminar demonstrating SAGA Pattern (Orchestration with Compensation) in Spring Boot",
+		"name": "SAGA Pattern Microservices Demo (Before vs After)",
+		"description": "Postman collection demonstrating Before SAGA (BUG-1..BUG-5) vs After SAGA (5 Golden Rules) across 4 microservices.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -40,18 +40,75 @@
 			]
 		},
 		{
-			"name": "1. Scenario 1 - Happy Path (Success)",
+			"name": "1. BEFORE SAGA (Reproduce Bugs)",
 			"item": [
 				{
-					"name": "Order MacBook Pro (Rich Customer)",
+					"name": "BUG-1: Partial Commit (No Compensation)",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"CUST-POOR\",\n  \"productId\": \"PROD-002\",\n  \"quantity\": 1,\n  \"amount\": 1000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders/without-saga?mode=partial_commit",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "without-saga"],
+							"query": [{ "key": "mode", "value": "partial_commit" }]
+						}
+					}
+				},
+				{
+					"name": "BUG-2: Dirty Read (Direct /deduct without Semantic Lock)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"CUST-POOR\",\n  \"productId\": \"PROD-002\",\n  \"quantity\": 1,\n  \"amount\": 1000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders/without-saga?mode=no_semantic_lock",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "without-saga"],
+							"query": [{ "key": "mode", "value": "no_semantic_lock" }]
+						}
+					}
+				},
+				{
+					"name": "BUG-3: Duplicate Request (No Operation Log -> x2 Debit)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"CUST-RICH\",\n  \"productId\": \"PROD-001\",\n  \"quantity\": 1,\n  \"amount\": 2000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders/without-saga?mode=duplicate_request",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "without-saga"],
+							"query": [{ "key": "mode", "value": "duplicate_request" }]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. AFTER SAGA (5 Golden Rules)",
+			"item": [
+				{
+					"name": "Happy Path (Order -> Inventory -> Payment -> Confirm)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"customerId\": \"CUST-RICH\",\n  \"productId\": \"PROD-001\",\n  \"quantity\": 1,\n  \"amount\": 2000.00\n}"
@@ -64,22 +121,12 @@
 							"path": ["api", "orders"]
 						}
 					}
-				}
-			]
-		},
-		{
-			"name": "2. Scenario 2 - SAGA Compensation (Rollback)",
-			"item": [
+				},
 				{
-					"name": "Order iPhone (Insufficient Funds -> Rollback Stock)",
+					"name": "Rule 1: LIFO Compensation (Insufficient Funds)",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"customerId\": \"CUST-POOR\",\n  \"productId\": \"PROD-002\",\n  \"quantity\": 1,\n  \"amount\": 1000.00\n}"
@@ -92,22 +139,30 @@
 							"path": ["api", "orders"]
 						}
 					}
-				}
-			]
-		},
-		{
-			"name": "3. Scenario 3 - Out of Stock (Fail at Step 1)",
-			"item": [
+				},
 				{
-					"name": "Order PS5 Pro (Out of stock)",
+					"name": "Rule 3: Idempotency Check (Duplicate Calls -> 1x Debit)",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customerId\": \"CUST-RICH\",\n  \"productId\": \"PROD-001\",\n  \"quantity\": 1,\n  \"amount\": 2000.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/orders/duplicate-check",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8080",
+							"path": ["api", "orders", "duplicate-check"]
+						}
+					}
+				},
+				{
+					"name": "Rule 4: Fail-Fast (Out of Stock -> Never Calls Payment)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"customerId\": \"CUST-RICH\",\n  \"productId\": \"PROD-OUT-OF-STOCK\",\n  \"quantity\": 1,\n  \"amount\": 600.00\n}"
@@ -124,10 +179,24 @@
 			]
 		},
 		{
-			"name": "4. Direct Microservice Inspection",
+			"name": "3. Direct Microservice Inspection",
 			"item": [
 				{
-					"name": "Inventory - List All Products",
+					"name": "Order Service - List All Orders (:8081)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/api/order",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8081",
+							"path": ["api", "order"]
+						}
+					}
+				},
+				{
+					"name": "Inventory - List All Products (:8082)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -141,7 +210,7 @@
 					}
 				},
 				{
-					"name": "Payment - List All Wallets",
+					"name": "Payment - List All Wallets (:8083)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -155,7 +224,7 @@
 					}
 				},
 				{
-					"name": "Orders - List All Orders with Trace Logs",
+					"name": "Orchestrator - List SAGA Executions (:8080)",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -172,4 +241,3 @@
 		}
 	]
 }
-

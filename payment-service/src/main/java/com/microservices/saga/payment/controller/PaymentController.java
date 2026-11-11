@@ -25,16 +25,16 @@ public class PaymentController {
 
     @PostMapping("/debit")
     @Operation(summary = "SAGA Forward Step: Debit customer wallet")
-    public ResponseEntity<PaymentResponse> debit(@RequestBody PaymentRequest request) {
-        PaymentResponse response = paymentService.debitCustomer(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<PaymentResponse> debit(
+            @RequestBody PaymentRequest request,
+            @RequestParam(defaultValue = "false") boolean bypassIdempotency) {
+        return ResponseEntity.ok(paymentService.debitCustomer(request, bypassIdempotency));
     }
 
     @PostMapping("/compensate")
     @Operation(summary = "SAGA Compensating Step: Refund customer wallet")
     public ResponseEntity<PaymentResponse> compensateRefund(@RequestBody PaymentRequest request) {
-        PaymentResponse response = paymentService.compensateRefund(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(paymentService.compensateRefund(request));
     }
 
     @GetMapping
@@ -47,10 +47,7 @@ public class PaymentController {
     @Operation(summary = "Get wallet for a specific customer")
     public ResponseEntity<CustomerWallet> getWallet(@PathVariable String customerId) {
         CustomerWallet wallet = paymentService.getWallet(customerId);
-        if (wallet == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(wallet);
+        return wallet == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(wallet);
     }
 
     @PostMapping("/reset")
@@ -60,4 +57,3 @@ public class PaymentController {
         return ResponseEntity.ok("Customer balances reset to initial demo state");
     }
 }
-

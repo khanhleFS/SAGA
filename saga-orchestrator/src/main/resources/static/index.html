@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAGA Pattern Live Demo | Before vs After</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --border-color: #374151;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 20px 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 18px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p { color: var(--text-muted); font-size: 13px; }
+
+        .badge-live {
+            background-color: rgba(16, 185, 129, 0.18);
+            color: var(--accent-green);
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-live::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.2); }
+        }
+
+        /* Top Mode Tabs: BEFORE vs AFTER SAGA */
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: var(--bg-secondary);
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 18px;
+        }
+
+        .mode-tab {
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .mode-tab:hover { background: rgba(255, 255, 255, 0.03); color: var(--text-main); }
+
+        .mode-tab.active-before,
+        .mode-tab.active-after {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: var(--accent-blue);
+            color: var(--text-main);
+        }
+
+        .tab-title { font-size: 14.5px; font-weight: 700; display: block; }
+        .tab-sub { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
+        .tab-pill {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
+            background: rgba(148, 163, 184, 0.14);
+            color: #cbd5e1;
+        }
+        .mode-tab.active-before .tab-pill,
+        .mode-tab.active-after .tab-pill {
+            background: rgba(59, 130, 246, 0.22);
+            color: #93c5fd;
+        }
+
+        /* Architecture Flow Diagram (4 Nodes) */
+        .diagram-section {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 18px;
+        }
+
+        .diagram-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-blue);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .workflow-nodes {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .node-card {
+            background-color: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.25s ease;
+        }
+
+        .node-card.active { border-color: var(--accent-blue); box-shadow: 0 0 14px rgba(59, 130, 246, 0.35); }
+        .node-card.success { border-color: var(--accent-green); box-shadow: 0 0 14px rgba(16, 185, 129, 0.35); }
+        .node-card.error { border-color: var(--accent-red); box-shadow: 0 0 14px rgba(239, 68, 68, 0.45); }
+        .node-card.compensating { border-color: var(--accent-yellow); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); }
+
+        .node-icon { font-size: 20px; margin-bottom: 4px; }
+        .node-name { font-weight: 700; font-size: 13px; }
+        .node-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .arrow { font-size: 18px; color: var(--text-muted); font-weight: bold; text-align: center; }
+
+        /* 4 Bug / Golden Rule Test Case Buttons + Happy Path */
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .scenario-btn {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid #475569;
+            border-radius: 10px;
+            padding: 13px 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            color: inherit;
+        }
+
+        .scenario-btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--accent-blue); }
+        .scenario-btn.selected { border-color: var(--accent-blue); border-left-color: var(--accent-blue); background: rgba(59, 130, 246, 0.08); }
+        .scenario-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .scenario-badge {
+            align-self: flex-start;
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .badge-neutral { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; }
+        .badge-green { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+        .badge-blue { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+
+        .scenario-title { font-size: 14px; font-weight: 700; }
+        .scenario-desc { font-size: 12px; color: var(--text-muted); }
+
+        /* MAIN SPLIT: Log on Left, Test Case & Bug Detector on Right */
+        .split-execution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .console-panel, .testcase-panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 360px;
+            overflow: hidden;
+        }
+
+        .console-panel { background-color: #05070e; }
+
+        .panel-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .console-body {
+            padding: 14px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .testcase-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .log-entry { margin-bottom: 6px; line-height: 1.55; }
+        .log-time { color: #64748b; }
+        .log-info { color: #38bdf8; }
+        .log-success { color: #4ade80; font-weight: 600; }
+        .log-warn { color: #fbbf24; font-weight: 600; }
+        .log-error { color: #f87171; font-weight: 700; }
+        .log-compensate { color: #c084fc; font-weight: 700; background: rgba(192, 132, 252, 0.1); padding: 2px 6px; border-radius: 4px; }
+
+        /* Test Case Verdict & Bug Alert Box */
+        .testcase-panel.verdict-fail {
+            border: 1.5px solid rgba(239, 68, 68, 0.7);
+        }
+
+        .testcase-panel.verdict-pass {
+            border: 1.5px solid rgba(16, 185, 129, 0.6);
+        }
+
+        .verdict-banner {
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+
+        .verdict-banner.fail {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.55);
+            color: #fecaca;
+        }
+
+        .verdict-banner.pass {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #a7f3d0;
+        }
+
+        .verdict-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 800;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .verdict-bug-tag {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .verdict-banner.fail .verdict-bug-tag { background: var(--accent-red); color: white; }
+        .verdict-banner.pass .verdict-bug-tag { background: var(--accent-green); color: #052e16; }
+
+        .verdict-explain { font-size: 13px; line-height: 1.5; }
+
+        .assertion-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .assertion-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #0f172a;
+            border-left: 4px solid var(--border-color);
+            font-size: 12.5px;
+        }
+
+        .assertion-item.assert-fail {
+            border-left-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .assertion-item.assert-pass {
+            border-left-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.07);
+        }
+
+        .assertion-title { font-weight: 700; display: flex; justify-content: space-between; }
+        .assertion-detail { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Live State Grid */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 980px) {
+            .mode-tabs, .split-execution, .grid-2col { grid-template-columns: 1fr; }
+            .workflow-nodes { grid-template-columns: 1fr; }
+            .arrow { transform: rotate(90deg); }
+        }
+
+        .state-panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .table th, .table td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .table th { color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; }
+
+        .btn-reset {
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .btn-reset:hover { background: #4b5563; }
+
+        .status-pill { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .status-COMPLETED { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .status-CANCELLED { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+        .status-PENDING { background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); }
+        .status-INVENTORY_RESERVED { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1>SAGA Pattern Microservices Live Demo</h1>
+            <p>Đối chứng Trước khi có SAGA (Data Anomalies) vs Sau khi có SAGA (Countermeasures: Compensation, Semantic Lock, Operation Log)</p>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <button class="btn-reset" onclick="resetAll()">🔄 Reset Hệ Thống</button>
+            <span class="badge-live">Live Connected</span>
+        </div>
+    </div>
+
+    <!-- TOP MODE SWITCHER TAB: BEFORE vs AFTER SAGA -->
+    <div class="mode-tabs">
+        <button class="mode-tab active-before" id="tab-before" onclick="switchMode('before')">
+            <div>
+                <span class="tab-title">1. TRƯỚC KHI CÓ SAGA (Naive Flow)</span>
+                <span class="tab-sub">Partial Commit, Dirty Read / Lost Update, không có Version/Operation Log</span>
+            </div>
+            <span class="tab-pill">Before SAGA</span>
+        </button>
+
+        <button class="mode-tab" id="tab-after" onclick="switchMode('after')">
+            <div>
+                <span class="tab-title">2. SAU KHI CÓ SAGA (Countermeasures)</span>
+                <span class="tab-sub">LIFO Compensation + Commutative Updates, Semantic Lock &amp; Operation Log</span>
+            </div>
+            <span class="tab-pill">After SAGA</span>
+        </button>
+    </div>
+
+    <!-- SAGA WORKFLOW ARCHITECTURE (4 NODES) -->
+    <div class="diagram-section">
+        <div class="diagram-title">
+            <span id="pipeline-title">Naive Sequential Pipeline (Không SAGA)</span>
+            <span style="font-size: 12px; color: var(--text-muted); text-transform: none;">
+                Orchestrator (:8080) &rarr; Order (:8081) &rarr; Inventory (:8082) &rarr; Payment (:8083)
+            </span>
+        </div>
+
+        <div class="workflow-nodes">
+            <div class="node-card" id="node-orchestrator">
+                <div class="node-icon">🎼</div>
+                <div class="node-name">Saga Orchestrator</div>
+                <div class="node-sub">Port 8080 &bull; Điều phối</div>
+            </div>
+
+            <div class="arrow">&rarr;</div>
+
+            <div class="node-card" id="node-order">
+                <div class="node-icon">📦</div>
+                <div class="node-name">T1: Order Service</div>
+                <div class="node-sub">Port 8081 &bull; Create / Cancel</div>
+            </div>
+
+            <div class="arrow">&rarr;</div>
+
+            <div class="node-card" id="node-inventory">
+                <div class="node-icon">🏬</div>
+                <div class="node-name">T2: Inventory Service</div>
+                <div class="node-sub">Port 8082 &bull; Reserve / Release</div>
+            </div>
+
+            <div class="arrow">&rarr;</div>
+
+            <div class="node-card" id="node-payment">
+                <div class="node-icon">💳</div>
+                <div class="node-name">T3: Payment Service</div>
+                <div class="node-sub">Port 8083 &bull; Debit / Refund</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEST CASE BUTTONS (Rendered dynamically based on Before / After tab) -->
+    <div class="scenarios-grid" id="scenarios-grid"></div>
+
+    <!-- MAIN SPLIT VIEW: LOG LEFT | TEST CASE & BUG DETECTOR RIGHT -->
+    <div class="split-execution">
+        <!-- LEFT: Execution Log -->
+        <div class="console-panel">
+            <div class="panel-bar">
+                <span id="console-header-title" style="color: #93c5fd;">Execution Log</span>
+                <button class="btn-reset" onclick="clearLogs()" style="padding: 3px 9px; font-size: 11px;">Clear</button>
+            </div>
+            <div class="console-body" id="console-logs">
+                <div class="log-entry log-info">Ready. Chọn chế độ và bấm 1 Test Case ở trên để chạy.</div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Automated Test Case & Bug Detector -->
+        <div class="testcase-panel" id="testcase-panel">
+            <div class="panel-bar">
+                <span id="testcase-header-title">🧪 Test Case &amp; Bug Detector (Bên Phải)</span>
+                <span id="testcase-status-pill" class="status-pill" style="background:#374151;color:#d1d5db;">CHƯA CHẠY</span>
+            </div>
+            <div class="testcase-body" id="testcase-body">
+                <div class="verdict-banner">
+                    <div class="verdict-header">
+                        <span>Sẵn sàng kiểm chứng Test Case</span>
+                    </div>
+                    <div class="verdict-explain" style="color: var(--text-muted);">
+                        Khi bấm chạy một kịch bản ở trên, panel này sẽ kiểm tra trực tiếp dữ liệu thật từ <b>Order (:8081)</b>, <b>Inventory (:8082)</b> và <b>Payment (:8083)</b>.
+                        Nếu phát hiện sai lệch dữ liệu ở chế độ <b>TRƯỚC SAGA</b>, hệ thống sẽ tự báo mã Bug và tô <span style="color:var(--accent-red);font-weight:700;">ĐỎ</span>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIVE SYSTEM STATE TABLES -->
+    <div class="grid-2col">
+        <div class="state-panel">
+            <div class="panel-header">
+                <span>🏬 Trạng Thái Kho (Inventory Service)</span>
+                <span style="font-size: 12px; color: var(--accent-blue);">REST :8082</span>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Mã SP</th>
+                        <th>Tên Sản Phẩm</th>
+                        <th>Khả Dụng</th>
+                        <th>Đang Giữ (Lock)</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-table-body">
+                    <tr><td colspan="4" style="text-align:center;">Đang tải...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="state-panel">
+            <div class="panel-header">
+                <span>💳 Ví Khách Hàng (Payment Service)</span>
+                <span style="font-size: 12px; color: var(--accent-blue);">REST :8083</span>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Mã Khách</th>
+                        <th>Tên Khách Hàng</th>
+                        <th>Số Dư Ví</th>
+                    </tr>
+                </thead>
+                <tbody id="wallet-table-body">
+                    <tr><td colspan="3" style="text-align:center;">Đang tải...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="state-panel">
+        <div class="panel-header">
+            <span>📋 Lịch Sử Đơn Hàng &amp; SAGA Trace</span>
+            <span style="font-size: 12px; color: var(--accent-blue);">Orchestrator :8080 &bull; Order :8081</span>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mã Đơn</th>
+                    <th>Khách Hàng</th>
+                    <th>Sản Phẩm</th>
+                    <th>SL</th>
+                    <th>Tổng Tiền</th>
+                    <th>Trạng Thái</th>
+                    <th>Chi Tiết / Lý Do</th>
+                </tr>
+            </thead>
+            <tbody id="orders-table-body">
+                <tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Chưa có đơn hàng nào được tạo.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentMode = 'before'; // 'before' | 'after'
+        let selectedTestId = null;
+        let isRunning = false;
+
+        const TEST_CASES = [
+            {
+                id: 'case1',
+                beforeBadge: 'BUG-1 • Partial Commit',
+                beforeTitle: '1. Thiếu tiền -> Lệch kho',
+                beforeDesc: 'CUST-POOR mua iPhone ($1,000). Payment lỗi nhưng kho đã trừ không hoàn tác.',
+                afterBadge: 'Countermeasure 1 • Compensation',
+                afterTitle: '1. LIFO Compensation + Commutative',
+                afterDesc: 'Payment lỗi -> Nhả kho (+1) rồi hủy đơn (CANCELLED). Kho về nguyên trạng.'
+            },
+            {
+                id: 'case2',
+                beforeBadge: 'BUG-2 • Dirty Read',
+                beforeTitle: '2. Đọc nhầm dữ liệu chưa xong',
+                beforeDesc: 'Gọi /deduct trừ thẳng availableStock (reserved=0) khi đơn chưa thanh toán.',
+                afterBadge: 'Countermeasure 2 • Semantic Lock',
+                afterTitle: '2. Semantic Lock (PENDING/RESERVED)',
+                afterDesc: 'Gọi /reserve khóa tạm vào reservedStock giữa luồng trước khi chốt.'
+            },
+            {
+                id: 'case3',
+                beforeBadge: 'BUG-3 • Conflicting Retry',
+                beforeTitle: '3. Gửi trùng -> Trừ x2',
+                beforeDesc: 'Thiếu Operation Log theo orderId: mạng retry gửi lại làm trừ kho/ví 2 lần.',
+                afterBadge: 'Countermeasure 3 • Version/Op Log',
+                afterTitle: '3. Operation Log (Idempotency)',
+                afterDesc: 'Ghi trạng thái orderId: gọi lại N lần vẫn chỉ thay đổi dữ liệu đúng 1 lần.'
+            },
+            {
+                id: 'happy',
+                beforeBadge: 'Baseline • Thành công',
+                beforeTitle: 'Happy Path (Đủ hàng & tiền)',
+                beforeDesc: 'CUST-RICH mua MacBook ($2,000). Cả 2 chế độ đều thành công.',
+                afterBadge: 'Baseline • Happy Path',
+                afterTitle: 'Happy Path (Đủ hàng & tiền)',
+                afterDesc: 'T1 Order -> T2 Inventory -> T3 Payment -> T4 Confirm COMPLETED.'
+            }
+        ];
+
+        function switchMode(mode) {
+            if (isRunning) return;
+            currentMode = mode;
+            const tabBefore = document.getElementById('tab-before');
+            const tabAfter = document.getElementById('tab-after');
+            const pipelineTitle = document.getElementById('pipeline-title');
+
+            tabBefore.className = 'mode-tab' + (mode === 'before' ? ' active-before' : '');
+            tabAfter.className = 'mode-tab' + (mode === 'after' ? ' active-after' : '');
+
+            pipelineTitle.textContent = mode === 'before'
+                ? 'Naive Sequential Pipeline (Trước SAGA)'
+                : 'SAGA Orchestrator Pipeline (Sau SAGA — Countermeasures)';
+            pipelineTitle.style.color = 'var(--accent-blue)';
+
+            renderActionButtons();
+            resetNodeHighlights();
+            resetTestCasePanel();
+            clearLogs();
+            appendLog(mode === 'before'
+                ? 'Mode: BEFORE SAGA. Chọn 1 trong 3 Test Cases (Data Anomalies) hoặc Happy Path.'
+                : 'Mode: AFTER SAGA. Chọn lại từng Test Case để kiểm chứng Countermeasures vá lỗi.',
+                'info', 'INFO ', 'dashboard');
+        }
+
+        function renderActionButtons() {
+            const grid = document.getElementById('scenarios-grid');
+            const isBefore = currentMode === 'before';
+
+            grid.innerHTML = TEST_CASES.map(tc => {
+                const isHappy = tc.id === 'happy';
+                const badgeClass = isHappy ? 'badge-blue' : (isBefore ? 'badge-neutral' : 'badge-green');
+                const selectedClass = selectedTestId === tc.id ? ' selected' : '';
+                return `
+                    <button class="scenario-btn${selectedClass}" ${isRunning ? 'disabled' : ''} onclick="runTestCase('${tc.id}')">
+                        <span class="scenario-badge ${badgeClass}">${isBefore ? tc.beforeBadge : tc.afterBadge}</span>
+                        <span class="scenario-title">${isBefore ? tc.beforeTitle : tc.afterTitle}</span>
+                        <span class="scenario-desc">${isBefore ? tc.beforeDesc : tc.afterDesc}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function resetTestCasePanel() {
+            document.getElementById('testcase-panel').className = 'testcase-panel';
+            document.getElementById('testcase-header-title').textContent = 'Test Case & Bug Detector (Bên Phải)';
+            const pill = document.getElementById('testcase-status-pill');
+            pill.textContent = 'CHƯA CHẠY';
+            pill.style.background = '#374151';
+            pill.style.color = '#d1d5db';
+            document.getElementById('testcase-body').innerHTML = `
+                <div class="verdict-banner">
+                    <div class="verdict-header"><span>Sẵn sàng kiểm chứng Test Case</span></div>
+                    <div class="verdict-explain" style="color: var(--text-muted);">
+                        Chọn 1 kịch bản ở trên để chạy. Panel này kiểm tra dữ liệu thật của <b>Order (:8081)</b>, <b>Inventory (:8082)</b> và <b>Payment (:8083)</b>
+                        — tự báo mã Bug và tô <span style="color:var(--accent-red);font-weight:700;">ĐỎ</span> nếu phát hiện lỗi ở chế độ Trước SAGA.
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatLogTime(ts) {
+            if (!ts) return new Date().toTimeString().slice(0, 12);
+            const tPart = String(ts).split('T')[1] || String(ts);
+            return tPart.slice(0, 12);
+        }
+
+        function appendLog(text, type = 'info', level = 'INFO ', service = 'dashboard', ts = null) {
+            const container = document.getElementById('console-logs');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<span class="log-time">${formatLogTime(ts)}</span> <span style="opacity:0.85;">${level}</span> <span style="color:#94a3b8;">[${service}]</span> ${text}`;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('console-logs').innerHTML = '';
+        }
+
+        async function getSnapshot() {
+            const res = await fetch(`${API_BASE}/system/snapshot`);
+            return await res.json();
+        }
+
+        async function fetchSystemState() {
+            try {
+                const data = await getSnapshot();
+                renderInventory(data.inventory);
+                renderWallets(data.wallets);
+                renderOrders(data.orders);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderInventory(items) {
+            const tbody = document.getElementById('inventory-table-body');
+            if (!items || items.length === 0) return;
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td><strong>${item.productId}</strong></td>
+                    <td>${item.productName}</td>
+                    <td style="color: ${item.availableStock > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight:700;">
+                        ${item.availableStock}
+                    </td>
+                    <td style="color: var(--accent-yellow); font-weight:700;">${item.reservedStock}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderWallets(wallets) {
+            const tbody = document.getElementById('wallet-table-body');
+            if (!wallets || wallets.length === 0) return;
+            tbody.innerHTML = wallets.map(w => `
+                <tr>
+                    <td><strong>${w.customerId}</strong></td>
+                    <td>${w.customerName}</td>
+                    <td style="color: var(--accent-green); font-weight:700;">$${w.balance.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('orders-table-body');
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Chưa có đơn hàng nào được tạo.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = orders.map(o => `
+                <tr>
+                    <td><strong>${o.orderId}</strong></td>
+                    <td>${o.customerId}</td>
+                    <td>${o.productId}</td>
+                    <td>${o.quantity}</td>
+                    <td>$${o.amount}</td>
+                    <td><span class="status-pill status-${o.status}">${o.status}</span></td>
+                    <td style="font-size:12px; color:var(--text-muted);">${o.failureReason || o.sagaLogs[o.sagaLogs.length - 1]?.details || 'Thành công'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function highlightNode(nodeId, state) {
+            const node = document.getElementById(nodeId);
+            if (node) node.className = 'node-card ' + state;
+        }
+
+        function resetNodeHighlights() {
+            ['node-orchestrator', 'node-order', 'node-inventory', 'node-payment'].forEach(id => {
+                const n = document.getElementById(id);
+                if (n) n.className = 'node-card';
+            });
+        }
+
+        function findProduct(snap, productId) {
+            return (snap.inventory || []).find(p => p.productId === productId);
+        }
+
+        function findWallet(snap, customerId) {
+            return (snap.wallets || []).find(w => w.customerId === customerId);
+        }
+
+        function findOrderRecord(snap, orderId) {
+            return (snap.orderRecords || []).find(o => o.orderId === orderId);
+        }
+
+        function streamServerLogs(orderRes) {
+            if (orderRes.sagaLogs) {
+                orderRes.sagaLogs.forEach(l => {
+                    let logType = 'info';
+                    let lvl = 'INFO ';
+                    if (l.status === 'SUCCESS') { logType = 'success'; lvl = 'INFO '; }
+                    else if (l.status === 'FAILED') { logType = 'error'; lvl = 'ERROR'; }
+                    else if (l.status === 'COMPENSATING' || l.status === 'COMPENSATED') { logType = 'compensate'; lvl = 'WARN '; }
+                    else if (l.status === 'PENDING') { logType = 'warn'; lvl = 'WARN '; }
+                    appendLog(l.details, logType, lvl, l.stepName, l.timestamp);
+                });
+            }
+            appendLog(`Response HTTP 200 -> orderId=${orderRes.orderId}, finalStatus=${orderRes.status}`,
+                orderRes.status === 'COMPLETED' ? 'success' : 'warn', 'INFO ', 'saga-orchestrator :8080');
+        }
+
+        async function runTestCase(caseId) {
+            if (isRunning) return;
+            isRunning = true;
+            selectedTestId = caseId;
+            renderActionButtons();
+            resetNodeHighlights();
+            clearLogs();
+
+            const isBefore = currentMode === 'before';
+            const tcMeta = TEST_CASES.find(t => t.id === caseId);
+            const runLabel = isBefore ? tcMeta.beforeTitle : tcMeta.afterTitle;
+            const modeLabel = isBefore ? 'TRƯỚC SAGA' : 'SAU SAGA';
+
+            document.getElementById('console-header-title').textContent = `Execution Log — ${modeLabel} | ${runLabel}`;
+            document.getElementById('testcase-header-title').textContent = `Test Case — ${runLabel}`;
+            const statusPill = document.getElementById('testcase-status-pill');
+            statusPill.textContent = 'RUNNING...';
+            statusPill.style.background = '#1e40af';
+            statusPill.style.color = '#dbeafe';
+            highlightNode('node-orchestrator', 'active');
+
+            try {
+                await fetch(`${API_BASE}/system/reset`, { method: 'POST' });
+                const beforeSnap = await getSnapshot();
+
+                let url = `${API_BASE}/orders`;
+                let payload = { customerId: 'CUST-POOR', productId: 'PROD-002', quantity: 1, amount: 1000.00 };
+                let captureMidFlight = false;
+
+                if (caseId === 'case1') {
+                    payload = { customerId: 'CUST-POOR', productId: 'PROD-002', quantity: 1, amount: 1000.00 };
+                    url = isBefore ? `${API_BASE}/orders/without-saga?mode=partial_commit` : `${API_BASE}/orders`;
+                } else if (caseId === 'case2') {
+                    payload = { customerId: 'CUST-RICH', productId: 'PROD-002', quantity: 1, amount: 1000.00 };
+                    url = isBefore
+                        ? `${API_BASE}/orders/without-saga?mode=no_semantic_lock&delayBeforePaymentMs=1400`
+                        : `${API_BASE}/orders?delayBeforePaymentMs=1400`;
+                    captureMidFlight = true;
+                } else if (caseId === 'case3') {
+                    payload = { customerId: 'CUST-RICH', productId: 'PROD-001', quantity: 1, amount: 2000.00 };
+                    url = isBefore ? `${API_BASE}/orders/without-saga?mode=duplicate_request` : `${API_BASE}/orders/duplicate-check`;
+                } else if (caseId === 'happy') {
+                    payload = { customerId: 'CUST-RICH', productId: 'PROD-001', quantity: 1, amount: 2000.00 };
+                    url = isBefore ? `${API_BASE}/orders/without-saga?mode=partial_commit` : `${API_BASE}/orders`;
+                }
+
+                appendLog(`POST ${url} body=${JSON.stringify(payload)}`, 'info', 'INFO ', 'client -> :8080');
+
+                let midSnap = null;
+                let midFlightPromise = Promise.resolve();
+                const fetchPromise = fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (captureMidFlight) {
+                    midFlightPromise = new Promise(resolve => {
+                        setTimeout(async () => {
+                            try {
+                                midSnap = await getSnapshot();
+                                renderInventory(midSnap.inventory);
+                                renderOrders(midSnap.orders);
+                                const midProd = findProduct(midSnap, payload.productId);
+                                appendLog(`GET /api/system/snapshot -> available=${midProd?.availableStock}, reserved=${midProd?.reservedStock}`, 'warn', 'INFO ', 'mid-flight check');
+                            } finally {
+                                resolve();
+                            }
+                        }, 650);
+                    });
+                }
+
+                const res = await fetchPromise;
+                await midFlightPromise;
+                const orderRes = await res.json();
+                const afterSnap = await getSnapshot();
+
+                streamServerLogs(orderRes);
+
+                const verdict = evaluateTestCase(caseId, payload, orderRes, beforeSnap, midSnap, afterSnap);
+                renderTestCaseVerdict(verdict);
+                updateNodeVisuals(verdict, caseId);
+
+                renderInventory(afterSnap.inventory);
+                renderWallets(afterSnap.wallets);
+                renderOrders(afterSnap.orders);
+            } catch (err) {
+                appendLog(`Lỗi kết nối: ${err.message}`, 'error', 'ERROR', 'dashboard');
+            } finally {
+                isRunning = false;
+                renderActionButtons();
+            }
+        }
+
+        function evaluateTestCase(caseId, payload, orderRes, beforeSnap, midSnap, afterSnap) {
+            const bProd = findProduct(beforeSnap, payload.productId);
+            const aProd = findProduct(afterSnap, payload.productId);
+            const bWal = findWallet(beforeSnap, payload.customerId);
+            const aWal = findWallet(afterSnap, payload.customerId);
+            const aOrd = findOrderRecord(afterSnap, orderRes.orderId);
+            const assertions = [];
+
+            if (caseId === 'case1') {
+                const stockRestored = aProd.availableStock === bProd.availableStock && aProd.reservedStock === 0;
+                const orderCancelled = (aOrd ? aOrd.status : orderRes.status) === 'CANCELLED';
+                assertions.push({
+                    title: 'Tồn kho không bị mất sau khi Payment thất bại',
+                    pass: stockRestored,
+                    detail: `Expected available=${bProd.availableStock}, reserved=0 | Actual available=${aProd.availableStock}, reserved=${aProd.reservedStock}`
+                });
+                assertions.push({
+                    title: 'Đơn hàng phải được hủy về CANCELLED (không treo PENDING)',
+                    pass: orderCancelled,
+                    detail: `Expected status=CANCELLED | Actual status=${aOrd ? aOrd.status : orderRes.status}`
+                });
+                const ok = stockRestored && orderCancelled;
+                return {
+                    ok,
+                    tag: ok ? 'PASS • RULE 1' : 'BUG-1 DETECTED',
+                    headline: ok ? 'Đã vá bằng Rule 1: Compensating Transaction (LIFO)' : 'PHÁT HIỆN BUG-1: Partial Commit (Lệch dữ liệu)!',
+                    explain: ok
+                        ? 'Payment lỗi -> Orchestrator chạy bù trừ ngược: nhả kho (5) rồi hủy đơn (CANCELLED).'
+                        : `Payment lỗi nhưng các bước trước đã commit: kho bị mất 1 máy (${bProd.availableStock} -> ${aProd.availableStock}) và đơn vẫn treo ${aOrd ? aOrd.status : orderRes.status}!`,
+                    assertions
+                };
+            }
+
+            if (caseId === 'case2') {
+                const mProd = midSnap ? findProduct(midSnap, payload.productId) : null;
+                const mOrd = midSnap ? findOrderRecord(midSnap, orderRes.orderId) : null;
+                const hadSemanticLock = mProd && mProd.reservedStock === payload.quantity;
+                const hadPendingOrder = mOrd && mOrd.status === 'PENDING';
+                assertions.push({
+                    title: 'Giữa luồng chạy phải dùng Semantic Lock (reservedStock = 1)',
+                    pass: !!hadSemanticLock,
+                    detail: `Mid-flight Expected reserved=${payload.quantity} | Actual reserved=${mProd ? mProd.reservedStock : 'N/A'} (available=${mProd ? mProd.availableStock : 'N/A'})`
+                });
+                assertions.push({
+                    title: 'Order giữ trạng thái PENDING trong lúc giao dịch chưa kết thúc',
+                    pass: !!hadPendingOrder,
+                    detail: `Mid-flight Expected Order=PENDING | Actual=${mOrd ? mOrd.status : 'N/A'}`
+                });
+                const ok = !!hadSemanticLock && !!hadPendingOrder;
+                return {
+                    ok,
+                    tag: ok ? 'PASS • SEMANTIC LOCK' : 'DIRTY READ DETECTED',
+                    headline: ok ? 'Đã vá bằng Semantic Lock (PENDING / RESERVED)' : 'PHÁT HIỆN BUG-2: Dirty Read (Trừ thẳng kho thật)!',
+                    explain: ok
+                        ? 'Ở thời điểm giữa giao dịch, hàng được đánh dấu khóa tạm trong cột "Đang Giữ" (reserved=1), ngăn đọc nhầm dữ liệu chưa chốt.'
+                        : 'Gọi /deduct trừ thẳng vào availableStock (reserved=0): giao dịch khác đọc vào tưởng hàng đã bán đứt dù chưa thanh toán!',
+                    assertions
+                };
+            }
+
+            if (caseId === 'case3') {
+                const expectedBalance = bWal.balance - payload.amount;
+                const expectedStock = bProd.availableStock - payload.quantity;
+                const walletOnce = Math.abs(aWal.balance - expectedBalance) < 0.01;
+                const stockOnce = aProd.availableStock === expectedStock && aProd.reservedStock === 0;
+                assertions.push({
+                    title: 'Gọi trùng debit 2 lần cùng orderId chỉ được trừ tiền 1 lần',
+                    pass: walletOnce,
+                    detail: `Expected balance=$${expectedBalance.toFixed(2)} | Actual=$${aWal.balance.toFixed(2)} (Mất $${(bWal.balance - aWal.balance).toFixed(2)})`
+                });
+                assertions.push({
+                    title: 'Gọi trùng reserve 2 lần cùng orderId chỉ được trừ kho 1 lần',
+                    pass: stockOnce,
+                    detail: `Expected stock=${expectedStock} | Actual available=${aProd.availableStock}, reserved=${aProd.reservedStock}`
+                });
+                const ok = walletOnce && stockOnce;
+                return {
+                    ok,
+                    tag: ok ? 'PASS • OPERATION LOG' : 'DUPLICATE BUG DETECTED',
+                    headline: ok ? 'Đã vá bằng Version / Operation Log (Idempotency)' : 'PHÁT HIỆN BUG-3: Conflicting / Duplicate Updates (Trừ x2)!',
+                    explain: ok
+                        ? 'Operation Log ghi nhận orderId đã xử lý -> trả về Idempotent OK, không xung đột hay trừ lặp lại.'
+                        : `Do thiếu Operation Log theo orderId, retry làm khách bị trừ $${(bWal.balance - aWal.balance).toFixed(2)} (gấp đôi!) và kho bị giữ dư 1 máy!`,
+                    assertions
+                };
+            }
+
+            const completed = orderRes.status === 'COMPLETED' && aProd.availableStock === bProd.availableStock - 1;
+            assertions.push({
+                title: 'Đơn hoàn tất (COMPLETED) & Kho/Ví trừ khớp nhau',
+                pass: completed,
+                detail: `Order=${orderRes.status}, Stock=${aProd.availableStock}, Balance=$${aWal.balance.toFixed(2)}`
+            });
+            return {
+                ok: completed,
+                tag: completed ? 'PASS • BASELINE' : 'FAIL',
+                headline: completed ? 'Happy Path thành công ở cả hai chế độ' : 'Giao dịch thất bại',
+                explain: 'Khi mọi bước đều đủ điều kiện (đủ hàng + đủ tiền), giao dịch kết thúc COMPLETED.',
+                assertions
+            };
+        }
+
+        function updateNodeVisuals(verdict, caseId) {
+            if (verdict.ok) {
+                if (caseId === 'happy' || caseId === 'case3' || caseId === 'case2') {
+                    highlightNode('node-orchestrator', 'success');
+                    highlightNode('node-order', 'success');
+                    highlightNode('node-inventory', 'success');
+                    highlightNode('node-payment', 'success');
+                } else if (caseId === 'case1') {
+                    highlightNode('node-orchestrator', 'compensating');
+                    highlightNode('node-order', 'compensating');
+                    highlightNode('node-inventory', 'compensating');
+                    highlightNode('node-payment', 'error');
+                }
+            } else {
+                highlightNode('node-orchestrator', 'active');
+                highlightNode('node-order', 'active');
+                if (caseId === 'case2') {
+                    highlightNode('node-inventory', 'error');
+                } else {
+                    highlightNode('node-inventory', 'active');
+                    highlightNode('node-payment', 'error');
+                }
+            }
+        }
+
+        function renderTestCaseVerdict(verdict) {
+            const panel = document.getElementById('testcase-panel');
+            const pill = document.getElementById('testcase-status-pill');
+            const body = document.getElementById('testcase-body');
+
+            panel.className = 'testcase-panel ' + (verdict.ok ? 'verdict-pass' : 'verdict-fail');
+            pill.textContent = verdict.tag;
+            pill.style.background = verdict.ok ? 'var(--accent-green)' : 'var(--accent-red)';
+            pill.style.color = verdict.ok ? '#052e16' : '#ffffff';
+
+            body.innerHTML = `
+                <div class="verdict-banner ${verdict.ok ? 'pass' : 'fail'}">
+                    <div class="verdict-header">
+                        <span>${verdict.ok ? '✅' : '🚨'} ${verdict.headline}</span>
+                        <span class="verdict-bug-tag">${verdict.tag}</span>
+                    </div>
+                    <div class="verdict-explain">${verdict.explain}</div>
+                </div>
+                <div class="assertion-list">
+                    ${verdict.assertions.map(a => `
+                        <div class="assertion-item ${a.pass ? 'assert-pass' : 'assert-fail'}">
+                            <div class="assertion-title">
+                                <span>${a.pass ? '✔' : '✖'} ${a.title}</span>
+                                <span style="color:${a.pass ? 'var(--accent-green)' : 'var(--accent-red)'}">${a.pass ? 'PASS' : 'FAIL'}</span>
+                            </div>
+                            <div class="assertion-detail">${a.detail}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function resetAll() {
+            if (isRunning) return;
+            try {
+                await fetch(`${API_BASE}/system/reset`, { method: 'POST' });
+                resetNodeHighlights();
+                clearLogs();
+                resetTestCasePanel();
+                appendLog('Reset all services (Order, Inventory, Payment) to default state.', 'success', 'INFO ', 'dashboard');
+                await fetchSystemState();
+            } catch (e) {
+                appendLog(`Lỗi reset: ${e.message}`, 'error', 'ERROR', 'dashboard');
+            }
+        }
+
+        // Init UI
+        switchMode('before');
+        fetchSystemState();
+        setInterval(() => { if (!isRunning) fetchSystemState(); }, 4000);
+    </script>
+</body>
+</html>

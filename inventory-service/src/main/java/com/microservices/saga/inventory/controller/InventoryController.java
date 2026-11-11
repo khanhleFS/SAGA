@@ -25,23 +25,35 @@ public class InventoryController {
 
     @PostMapping("/reserve")
     @Operation(summary = "SAGA Forward Step: Reserve Stock")
-    public ResponseEntity<InventoryResponse> reserveStock(@RequestBody InventoryRequest request) {
-        InventoryResponse response = inventoryService.reserveStock(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<InventoryResponse> reserveStock(
+            @RequestBody InventoryRequest request,
+            @RequestParam(defaultValue = "false") boolean bypassIdempotency) {
+        return ResponseEntity.ok(inventoryService.reserveStock(request, bypassIdempotency));
+    }
+
+    @PostMapping("/deduct")
+    @Operation(summary = "Naive Step (No Semantic Lock): Deduct stock directly")
+    public ResponseEntity<InventoryResponse> deductDirect(@RequestBody InventoryRequest request) {
+        return ResponseEntity.ok(inventoryService.deductDirectWithoutLock(request));
     }
 
     @PostMapping("/compensate")
     @Operation(summary = "SAGA Compensating Step: Release Reserved Stock")
     public ResponseEntity<InventoryResponse> compensateRelease(@RequestBody InventoryRequest request) {
-        InventoryResponse response = inventoryService.compensateReleaseStock(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(inventoryService.compensateReleaseStock(request));
     }
 
     @PostMapping("/confirm")
     @Operation(summary = "SAGA Finalization: Confirm stock deduction")
     public ResponseEntity<InventoryResponse> confirmDeduction(@RequestBody InventoryRequest request) {
-        InventoryResponse response = inventoryService.confirmDeduction(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(inventoryService.confirmDeduction(request));
+    }
+
+    @PostMapping("/demo/compensate-failures")
+    @Operation(summary = "Demo helper: simulate N transient failures during compensation")
+    public ResponseEntity<String> simulateCompensateFailures(@RequestParam(defaultValue = "2") int count) {
+        inventoryService.simulateCompensateFailures(count);
+        return ResponseEntity.ok("Armed " + count + " simulated compensation failures");
     }
 
     @GetMapping
@@ -54,10 +66,7 @@ public class InventoryController {
     @Operation(summary = "Get inventory details for a product")
     public ResponseEntity<ProductInventory> getProduct(@PathVariable String productId) {
         ProductInventory item = inventoryService.getProduct(productId);
-        if (item == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(item);
+        return item == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(item);
     }
 
     @PostMapping("/reset")
@@ -67,4 +76,3 @@ public class InventoryController {
         return ResponseEntity.ok("Inventory reset to initial demo state");
     }
 }
-

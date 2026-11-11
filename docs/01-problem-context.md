@@ -1,52 +1,48 @@
-# 1. Problem & Context
+# 1. Problem & Context: Giao dịch Phân tán & Data Anomalies trong SAGA
 
-## Monolith: một `@Transactional` là đủ
-Toàn bộ ứng dụng dùng chung một database. Lỗi ở bước nào thì rollback toàn bộ (ACID).
-
-```
-BEGIN;
+## 1. Từ Monolith sang Microservices
+Trong **Monolith**, toàn bộ ứng dụng dùng chung 1 Database. Khi đặt hàng, chỉ cần bọc trong `@Transactional`:
+```sql
+BEGIN TRANSACTION;
+  Create Order;
   Deduct Inventory;
   Debit Wallet;
-  Create Order;
-COMMIT;  -- hoặc ROLLBACK nếu có lỗi
+COMMIT; -- Lỗi ở bất kỳ đâu -> DB tự ROLLBACK sạch sẽ (Đảm bảo ACID)
 ```
 
-## Microservices: Database-per-Service
-`Order`, `Inventory`, `Payment` là các service độc lập, **mỗi service sở hữu database riêng**. Một transaction **không thể bao trùm nhiều service và nhiều database**.
+Khi tách sang **Microservices** theo nguyên tắc **Database-per-Service**:
+- `Order Service` (:8081) sở hữu dữ liệu đơn hàng.
+- `Inventory Service` (:8082) sở hữu dữ liệu tồn kho.
+- `Payment Service` (:8083) sở hữu dữ liệu ví tiền.
 
-> **Lưu ý cho phần demo:** để đơn giản, bản demo có thể chạy chung 1 DB vật lý. Khi đó mỗi service vẫn chỉ đụng bảng của mình và không đặt foreign key giữa các service. Đây chỉ là cách đơn giản hóa khi demo, không phải nguyên tắc của Saga.
+> **Lưu ý về bản Demo:** Thực tế mỗi service có một Database riêng. Trong **bản demo này không cần cài đặt DB**; mỗi service giữ một **In-Memory Store độc lập** (`ConcurrentHashMap` + `synchronized`) để mô phỏng Local Transaction tách rời và reset trạng thái nhanh khi thuyết trình.
 
-## Vấn đề
-Bước 1 đã commit, bước 2 lỗi thì dữ liệu bị lệch.
+---
 
-Ví dụ đặt phòng khách sạn: `Booking → Payment → Reservation`.
-Khách đã trả tiền, nhưng lúc đặt phòng thì người khác nhanh tay hơn. Nếu không có cơ chế hoàn tác, khách **mất tiền và mất phòng**.
+## 2. Hai nhóm vấn đề khi Microservices thiếu Isolation (Theo Microsoft Azure Saga)
 
-## Giải pháp "kiểu transactional": 2PC (Two-Phase Commit)
-2PC cố gắng giải bài toán này đúng như cách `@Transactional` làm trong monolith, nhưng áp dụng cho nhiều service/DB: **hoặc tất cả cùng commit, hoặc tất cả cùng rollback**.
+### A. Partial Commit (Mất tính Atomicity)
+Mỗi service tự commit Local Transaction của mình. Nếu Bước 1 (`Order`), Bước 2 (`Inventory`) đã commit mà Bước 3 (`Payment`) thất bại $\rightarrow$ không có SQL `ROLLBACK` nào cứu được 2 service trước $\rightarrow$ **lệch dữ liệu** (kho mất hàng, đơn treo).
 
-Có một **Coordinator** điều phối, chia 2 pha:
-1. **Prepare:** Coordinator hỏi từng service "sẵn sàng commit chưa?". Mỗi service khóa dữ liệu và trả lời Yes/No.
-2. **Commit/Rollback:** tất cả Yes thì ra lệnh Commit. Chỉ cần một No thì ra lệnh Rollback cho tất cả.
+### B. Potential Data Anomalies (Bất thường dữ liệu do thiếu Isolation)
+Vì không có khóa liên service (Built-in Isolation), các Saga chạy song song hoặc lỗi giữa chừng sẽ gây ra **3 hiện tượng bất thường điển hình**:
 
-```
-Coordinator ──Prepare?──▶ Order        (khóa, Yes)
-            ──Prepare?──▶ Inventory    (khóa, Yes)
-            ──Prepare?──▶ Payment      (khóa, No)
-            ──Rollback──▶ tất cả
-```
-
-Nghe giống `@Transactional` phân tán, nhưng **ít dùng trong microservices** vì:
-- **Khóa tài nguyên:** các service giữ lock từ Prepare đến Commit, qua cả độ trễ mạng, làm giảm throughput.
-- **Single point of failure:** coordinator chết giữa chừng thì các service bị treo và giữ lock.
-- **Phụ thuộc chặt:** mọi service phải hỗ trợ XA và cùng online. Khó scale.
-
-| | 2PC | Saga |
+| Data Anomaly | Bản chất vấn đề | Ví dụ trong hệ thống đặt hàng |
 |---|---|---|
-| Cách làm | Khóa tất cả rồi commit đồng loạt | Mỗi bước commit ngay, lỗi thì bù trừ |
-| Nhất quán | Mạnh (ACID) | Cuối cùng (eventual) |
-| Isolation | Có | Không |
-| Khả dụng, hiệu năng | Thấp | Cao |
-| Gánh nặng | Hạ tầng XA | Dev tự viết compensation |
+| **1. Lost Updates** | Một Saga ghi đè hoặc làm mất cập nhật của một Saga khác vì không xét đến thay đổi đang diễn ra. | Saga A ghi đè số dư/tồn kho cố định hoặc trừ thẳng mà bỏ qua thay đổi của Saga B $\rightarrow$ mất dữ liệu cập nhật. |
+| **2. Dirty Reads** | Một Saga hoặc transaction khác **đọc phải dữ liệu chưa hoàn tất** của Saga đang chạy (sau đó Saga đó có thể bị rollback/bù trừ). | Saga A vừa trừ thẳng kho xong nhưng chưa thanh toán; bên ngoài nhìn vào tưởng hàng đã bán đứt (`available` giảm), ngay sau đó Saga A thất bại ở Payment! |
+| **3. Fuzzy (Nonrepeatable) Reads** | Các bước khác nhau trong cùng một Saga đọc ra **giá trị không nhất quán** vì có cập nhật chen vào giữa hai lần đọc. | Bước 1 kiểm tra giá/tồn kho là X, đến bước 3 thanh toán thì dữ liệu đã bị giao dịch khác sửa thành Y. |
 
-→ Cần một cách khác: **Saga Pattern** (xem [02-saga-pattern.md](02-saga-pattern.md)).
+*(Cộng thêm trong mạng phân tán: nếu lệnh bị gửi trùng khi timeout mà service không lưu vết thao tác theo `orderId` $\rightarrow$ trừ kho / trừ tiền 2 lần).*
+
+---
+
+## 3. Vì sao không dùng 2PC (Two-Phase Commit) để khóa cứng?
+**2PC** mang `@Transactional` lên môi trường phân tán qua 2 pha (**Prepare** $\rightarrow$ **Commit/Rollback**) bằng cách **khóa chặt (lock)** dữ liệu ở mọi service suốt thời gian giao tiếp mạng.
+
+**Lý do Microservices tránh dùng 2PC:**
+- **Khóa lâu (Blocking Locks):** Thông lượng (throughput) tụt mạnh do giữ lock qua mạng.
+- **SPOF:** Coordinator sập giữa chừng thì các service bị treo lock.
+- **Phụ thuộc chặt:** Mọi service/DB phải hỗ trợ XA và online cùng lúc.
+
+→ Thay vào đó, **SAGA Pattern** chấp nhận thiếu Isolation ở mức hạ tầng và dùng **Compensating Transactions + Các chiến lược chống Data Anomalies** ở mức ứng dụng (xem [02-saga-pattern.md](02-saga-pattern.md)).

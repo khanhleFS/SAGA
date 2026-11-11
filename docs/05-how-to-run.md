@@ -1,17 +1,28 @@
 # 5. How to run
 
 ## Kiến trúc demo
+Orchestrator đứng **ngoài** 3 service nghiệp vụ. Nó chỉ điều phối luồng, còn mỗi service tự giữ dữ liệu độc lập (dùng In-Memory Store — không cần cài thêm Database để chạy nhẹ và reset đồng bộ nhanh khi demo).
+
 ```
-        Dashboard (http://localhost:8080)
-                   │ REST
-                   ▼
-        ORDER ORCHESTRATOR (:8080)
-          Saga: reserve → debit → confirm
-          Lỗi: compensate ngược lại
-            │                      │
-            ▼                      ▼
-   INVENTORY (:8082)        PAYMENT (:8083)
+          Dashboard (http://localhost:8080)
+                       │ REST
+                       ▼
+             SAGA ORCHESTRATOR (:8080)
+        Forward: T1 → T2 → T3 → T4
+        Lỗi: chạy compensation ngược lại
+         │             │              │
+         ▼             ▼              ▼
+   ORDER (:8081)  INVENTORY (:8082)  PAYMENT (:8083)
 ```
+
+| Bước | Forward (service) | Compensation |
+|---|---|---|
+| T1 | Order: tạo đơn `PENDING` | Order: hủy đơn (`CANCELLED`) |
+| T2 | Inventory: giữ hàng | Inventory: nhả hàng |
+| T3 | Payment: trừ tiền | Payment: hoàn tiền |
+| T4 | Confirm Inventory và Order: `COMPLETED` | (không cần) |
+
+Orchestrator đẩy compensation vào một stack sau mỗi bước thành công. Khi có lỗi, nó chạy ngược lại theo thứ tự LIFO.
 
 **Dữ liệu mẫu**
 | Loại | ID | Ghi chú |
@@ -38,19 +49,24 @@ start-all.bat        # Windows
 ./start-all.sh       # Linux/macOS
 ```
 
-## Chạy test
+## Chạy bộ Test Đối Chứng (Dò lỗi $\rightarrow$ Vá từng bước)
 ```bash
+# Chạy toàn bộ test across 4 modules
 mvn test
+
+# Chạy từng bài test minh họa khi thuyết trình:
+mvn test -Dtest=WithoutSagaProblemsTest            # Phần 1: Tái hiện Partial Commit & Dirty Read
+mvn test -Dtest=Rule1_AtomicityAndCompensationTest # Case 1: LIFO Compensation + Commutative Updates
+mvn test -Dtest=Rule2_SemanticLockIsolationTest    # Case 2: Semantic Lock (PENDING/RESERVED)
+mvn test -Dtest=Rule3_*IdempotencyTest             # Case 3: Operation Log / Idempotency theo orderId
 ```
 
-## Demo 3 kịch bản
-Mở dashboard `http://localhost:8080` và bấm từng nút, hoặc chạy `demo-scenarios.bat` / `demo-scenarios.sh`.
-
-| Kịch bản | Kết quả |
-|---|---|
-| 1. Thành công (`CUST-RICH` mua `PROD-001`) | `COMPLETED` |
-| 2. Bù trừ (`CUST-POOR` mua `PROD-002`) | Giữ kho OK → trừ tiền lỗi → **nhả kho** → `CANCELLED` |
-| 3. Hết hàng (`PROD-OUT-OF-STOCK`) | Lỗi ngay bước 1 → `CANCELLED`, không gọi Payment |
+## Demo trực quan trên Web Dashboard
+Mở `http://localhost:8080`:
+- Dùng 2 Tab trên cùng để chuyển đổi giữa **1. TRƯỚC KHI CÓ SAGA** và **2. SAU KHI CÓ SAGA**.
+- Chọn từng nút trong **3 Test Cases** (`Partial Commit`, `Dirty Read / Semantic Lock`, `Duplicate / Operation Log`) hoặc **Happy Path**:
+  - **Bên trái:** Log giao tiếp thực tế giữa 4 services (`:8080`, `:8081`, `:8082`, `:8083`).
+  - **Bên phải:** Panel Test Case tự kiểm tra dữ liệu thực — tự báo mã Bug/Anomaly và tô **ĐỎ** khi chạy ở chế độ Trước SAGA, chuyển **XANH** khi chạy ở chế độ Sau SAGA.
 
 ## API
 - Dashboard: http://localhost:8080

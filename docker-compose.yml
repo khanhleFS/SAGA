@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: saga-order-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+    networks:
+      - saga-network
+
   inventory-service:
     build:
       context: .
@@ -25,18 +37,20 @@ services:
     networks:
       - saga-network
 
-  order-orchestrator:
+  saga-orchestrator:
     build:
       context: .
-      dockerfile: order-orchestrator/Dockerfile
-    container_name: saga-order-orchestrator
+      dockerfile: saga-orchestrator/Dockerfile
+    container_name: saga-orchestrator
     ports:
       - "8080:8080"
     environment:
       - SERVER_PORT=8080
+      - ORDER_SERVICE_URL=http://order-service:8081
       - INVENTORY_SERVICE_URL=http://inventory-service:8082
       - PAYMENT_SERVICE_URL=http://payment-service:8083
     depends_on:
+      - order-service
       - inventory-service
       - payment-service
     networks:
@@ -45,4 +59,3 @@ services:
 networks:
   saga-network:
     driver: bridge
-

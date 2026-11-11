@@ -1,56 +1,40 @@
-# 2. Saga Pattern: lý thuyết và các loại
+# 2. Saga Pattern: Lý thuyết, 2 Cách Implement & Chiến lược chống Data Anomalies
 
-## Saga là gì?
-Saga là **chuỗi các local transaction**. Mỗi service commit ngay vào DB của mình.
-Nếu một bước lỗi, Saga chạy **compensating transaction** (giao dịch bù trừ) cho các bước đã xong, theo **thứ tự ngược lại**.
+## 1. Lý thuyết cốt lõi của SAGA Pattern
+**SAGA** chia một giao dịch phân tán thành **chuỗi các Local Transactions** ($T_1, T_2, \dots, T_n$):
+- Mỗi bước $T_i$ tự commit ngay vào dữ liệu của service đó (không giữ lock liên service).
+- Mỗi bước tiến $T_i$ (**Forward / Compensable Action**) đi kèm một bước lùi $C_i$ (**Compensating Action** — bù trừ nghiệp vụ).
+- Nếu bước $T_k$ thất bại, SAGA tự động chạy chuỗi bù trừ **theo thứ tự ngược lại (LIFO)**: $C_{k-1} \rightarrow C_{k-2} \rightarrow \dots \rightarrow C_1$.
 
 ```
-T1 → T2 → T3 (lỗi!)  ⇒  C2 → C1
+Chiều tiến (Forward):     T1 (Order) ──▶ T2 (Inventory) ──▶ T3 (Payment ❌ Lỗi!)
+                                                                 │
+Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────────┘
 ```
 
-- Saga là **pattern kiến trúc**, không phải thư viện hay đoạn code cố định.
-- **Compensation không phải rollback DB.** Các bước trước đã commit thật, nên phải làm hành động nghiệp vụ ngược lại.
+---
 
-| Bước | Forward | Compensation |
+## 2. Hai cách implement SAGA
+
+| Tiêu chí | Choreography (Biên đạo múa) | Orchestration (Nhạc trưởng) |
 |---|---|---|
-| Giữ hàng / phòng | `available - 1`, `reserved + 1` | `available + 1`, `reserved - 1` |
-| Trừ tiền | Debit ví | Refund ví |
-| Tạo booking | `PENDING` | `CANCELLED` + thông báo user |
+| **Cơ chế** | Phân tán: mỗi service xong việc tự bắn **Event** lên Broker (Kafka/RabbitMQ). | Tập trung: 1 **Orchestrator** gửi **Command** điều phối từng service và gọi bù trừ khi lỗi. |
+| **Phù hợp** | Quy trình ngắn (2–3 service), đơn giản. | Quy trình nhiều bước, cần theo dõi trạng thái tập trung & dễ debug. |
+| **Giao tiếp** | Gần như bắt buộc dùng Message Broker. | REST hoặc Broker đều được *(Demo dùng REST + Orchestrator đứng ngoài 3 services)*. |
 
-## Mô hình nhất quán
-Saga theo hướng **BASE**: đạt **eventual consistency**.
-Saga **không có Isolation**, nên khi Saga đang chạy, transaction khác có thể thấy dữ liệu trung gian.
-Cách giảm thiểu là dùng trạng thái giữ chỗ tạm (`PENDING`, `RESERVED`) trước khi chốt.
+---
 
-## Hai loại Saga
+## 3. Các chiến lược chống Data Anomalies (Theo Microsoft Azure Saga)
 
-### Choreography (biên đạo)
-Không có điều phối trung tâm. Mỗi service phát **event** lên message broker, service khác lắng nghe và tự làm bước của mình.
+Để khắc phục 3 bất thường (*Lost Updates, Dirty Reads, Fuzzy Reads*) ở [01-problem-context.md](01-problem-context.md), tài liệu chuẩn của Microsoft & Chris Richardson đưa ra **6 Countermeasures**:
 
-```
-Booking ──BookingCreated──▶ Reservation ──RoomReserved──▶ Payment ──PaymentDone──▶ Booking(CONFIRMED)
-```
-
-### Orchestration (nhạc trưởng)
-Một **Orchestrator** giữ luồng nghiệp vụ, ra **command** cho từng service và kích hoạt bù trừ khi có lỗi.
-
-```
-Orchestrator ──reserve──▶ Inventory
-             ──debit────▶ Payment
-             ──(lỗi) compensate──▶ Inventory
-```
-
-### Khi nào dùng loại nào?
-| | Choreography | Orchestration |
+| Chiến lược (Countermeasure) | Cách hoạt động | Áp dụng trong Demo |
 |---|---|---|
-| Điều khiển luồng | Phân tán (event) | Tập trung (orchestrator) |
-| Phù hợp | Ít bước (2-3), hệ thống đơn giản | Nhiều bước, logic phân nhánh |
-| Ưu điểm | Loose coupling, cấu hình đơn giản | Dễ theo dõi, dễ debug, dễ thêm bước |
-| Nhược điểm | Khó theo dõi khi nhiều bước | Orchestrator cần chịu lỗi tốt |
-| Cần broker? | Gần như bắt buộc | Không bắt buộc |
+| **1. Semantic Lock** | Dùng khóa ở tầng ứng dụng (ví dụ `Order = PENDING`, `Inventory = reservedStock`) để báo hiệu dữ liệu đang trong một Saga chưa hoàn tất $\rightarrow$ chống **Dirty Read**. | **Có (Case 2):** Tách `availableStock` và `reservedStock`, `Order = PENDING`. |
+| **2. Commutative Updates** | Thiết kế các phép cập nhật có tính giao hoán (`+amount` / `-amount`, `+qty` / `-qty`), chạy theo thứ tự nào cũng cho cùng kết quả $\rightarrow$ chống **Lost Updates**. | **Có (Case 1):** Bù trừ cộng/trừ delta (`+qty`, `+amount`), không ghi đè giá trị cứng. |
+| **3. Version Files (Operation Log)** | Ghi log mọi thao tác theo `orderId` / version để đảm bảo các thao tác chạy đúng thứ tự, tránh xung đột và đảm bảo **Idempotency** khi retry. | **Có (Case 3):** Map `reservationStates` & `paymentStates` theo `orderId`. |
+| **4. Pessimistic View** | Sắp xếp lại thứ tự Saga: đẩy các bước cập nhật nhạy cảm sang các bước retryable về sau, đặt bước dễ lỗi/dễ bù trừ (`Inventory`) lên trước (`Payment`) để giảm rủi ro Dirty Read. | **Có (Luồng chuẩn):** Chạy `Order -> Inventory -> Payment -> Confirm`. |
+| **5. Reread Values** | Đọc lại giá trị trước khi cập nhật cuối; nếu dữ liệu đã bị Saga khác sửa đổi thì dừng và khởi động lại Saga $\rightarrow$ chống **Fuzzy Reads / Lost Updates**. | *Ghi chú lý thuyết (mở rộng khi dùng DB/Version).* |
+| **6. Risk-based Concurrency** | Chọn cơ chế đồng bộ theo mức độ rủi ro nghiệp vụ (giao dịch rủi ro thấp dùng Saga, giao dịch rủi ro cực cao có thể dùng cơ chế khóa chặt). | *Ghi chú kiến trúc khi thiết kế hệ thống.* |
 
-### Lưu ý: broker và kiểu Saga là hai việc khác nhau
-- **Kiểu Saga** quyết định *ai điều khiển luồng*.
-- **Cách giao tiếp** (REST hay broker/Kafka) quyết định *service nói chuyện bằng gì*.
-- Orchestration có thể chạy bằng REST đồng bộ hoặc broker (command/reply).
-- **Dự án này dùng Orchestration + REST** để dễ trực quan hóa khi demo.
+→ Chi tiết cách từng Case trên Demo chứng minh **Trước (Anomaly/Bug) vs Sau (Countermeasure)** xem tại [03-golden-rules.md](03-golden-rules.md).
