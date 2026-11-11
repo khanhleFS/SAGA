@@ -77,10 +77,10 @@
             50% { opacity: 0.4; transform: scale(1.2); }
         }
 
-        /* Top Mode Tabs: BEFORE vs AFTER SAGA */
+        /* Top Mode Tabs: BEFORE vs AFTER SAGA vs DOCS */
         .mode-tabs {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             background: var(--bg-secondary);
             padding: 8px;
@@ -113,6 +113,12 @@
             color: var(--text-main);
         }
 
+        .mode-tab.active-docs {
+            background: rgba(139, 92, 246, 0.14);
+            border-color: var(--accent-purple);
+            color: var(--text-main);
+        }
+
         .tab-title { font-size: 14.5px; font-weight: 700; display: block; }
         .tab-sub { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
         .tab-pill {
@@ -129,8 +135,12 @@
             background: rgba(59, 130, 246, 0.22);
             color: #93c5fd;
         }
+        .mode-tab.active-docs .tab-pill {
+            background: rgba(139, 92, 246, 0.28);
+            color: #ddd6fe;
+        }
 
-        /* Architecture Flow Diagram (4 Nodes) */
+        /* Architecture Flow Diagram (3 Nodes: T1 -> T3) */
         .diagram-section {
             background-color: var(--bg-secondary);
             border: 1px solid var(--border-color);
@@ -155,7 +165,7 @@
 
         .workflow-nodes {
             display: grid;
-            grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+            grid-template-columns: 1fr auto 1fr auto 1fr;
             align-items: center;
             gap: 10px;
         }
@@ -365,7 +375,8 @@
         }
 
         @media (max-width: 980px) {
-            .mode-tabs, .split-execution, .grid-2col { grid-template-columns: 1fr; }
+            .mode-tabs, .split-execution, .grid-2col, .docs-layout { grid-template-columns: 1fr; }
+            .docs-sidebar { position: static; }
             .workflow-nodes { grid-template-columns: 1fr; }
             .arrow { transform: rotate(90deg); }
         }
@@ -407,6 +418,419 @@
         .status-CANCELLED { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
         .status-PENDING { background: rgba(245, 158, 11, 0.2); color: var(--accent-yellow); }
         .status-INVENTORY_RESERVED { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+
+        /* Presentation Docs View */
+        .docs-layout {
+            display: grid;
+            grid-template-columns: 290px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .docs-sidebar {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            position: sticky;
+            top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .docs-sidebar-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #c4b5fd;
+            padding: 2px 4px;
+        }
+
+        .docs-nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .doc-nav-item {
+            width: 100%;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 11px;
+            border-radius: 9px;
+            border: 1px solid transparent;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.18s ease;
+        }
+
+        .doc-nav-item:hover {
+            background: rgba(139, 92, 246, 0.08);
+            border-color: rgba(139, 92, 246, 0.35);
+            color: var(--text-main);
+        }
+
+        .doc-nav-item.active {
+            background: rgba(139, 92, 246, 0.16);
+            border-color: var(--accent-purple);
+            color: var(--text-main);
+        }
+
+        .doc-nav-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 5px;
+            background: rgba(148, 163, 184, 0.14);
+            color: #cbd5e1;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .doc-nav-item.active .doc-nav-num {
+            background: var(--accent-purple);
+            color: #ffffff;
+        }
+
+        .doc-nav-title {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .doc-nav-sub {
+            display: block;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            line-height: 1.35;
+        }
+
+        .docs-quick-box {
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .docs-quick-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .docs-quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .btn-doc-jump {
+            padding: 7px 10px;
+            border-radius: 7px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.18s ease;
+        }
+
+        .btn-doc-jump:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.14);
+        }
+
+        .docs-reader {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .docs-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .docs-file-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .docs-file-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(139, 92, 246, 0.18);
+            color: #ddd6fe;
+        }
+
+        .docs-step-pill {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .docs-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-doc-ctrl {
+            padding: 6px 11px;
+            border-radius: 7px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .btn-doc-ctrl:hover:not(:disabled) {
+            border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.15);
+        }
+
+        .btn-doc-ctrl:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .docs-article {
+            padding: 24px 28px;
+            font-size: var(--docs-font-size, 15px);
+            line-height: 1.7;
+            color: #e5e7eb;
+        }
+
+        .docs-article h1 {
+            font-size: 1.65em;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, #93c5fd, #c4b5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .docs-article h2 {
+            font-size: 1.25em;
+            font-weight: 700;
+            color: #93c5fd;
+            margin-top: 24px;
+            margin-bottom: 10px;
+        }
+
+        .docs-article h3 {
+            font-size: 1.06em;
+            font-weight: 700;
+            color: #ddd6fe;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .docs-article p { margin-bottom: 12px; }
+
+        .docs-article ul, .docs-article ol {
+            margin: 8px 0 14px 22px;
+        }
+
+        .docs-article li { margin-bottom: 6px; }
+
+        .docs-article hr {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 22px 0;
+        }
+
+        .docs-article code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88em;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            color: #93c5fd;
+            padding: 2px 6px;
+            border-radius: 5px;
+        }
+
+        .doc-code-wrap {
+            position: relative;
+            margin: 12px 0 16px;
+        }
+
+        .docs-article pre {
+            background: #05070e;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px 16px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.86em;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+
+        .docs-article pre code {
+            background: transparent;
+            border: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+
+        .btn-copy-code {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 9px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: rgba(31, 41, 55, 0.9);
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-copy-code:hover {
+            border-color: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .doc-table-wrap {
+            overflow-x: auto;
+            margin: 12px 0 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.92em;
+        }
+
+        .doc-table th, .doc-table td {
+            padding: 10px 13px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        .doc-table th {
+            background: rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
+            font-weight: 700;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .doc-table tr:last-child td { border-bottom: none; }
+        .doc-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .doc-callout {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin: 12px 0 16px;
+            color: #dbeafe;
+        }
+
+        .doc-link-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #60a5fa;
+            font: inherit;
+            font-weight: 600;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .doc-link-btn:hover { color: #93c5fd; }
+
+        .docs-article a {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+
+        .docs-article a:hover { color: #93c5fd; }
+
+        .doc-tag-bug {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 5px;
+            font-size: 0.82em;
+            font-weight: 700;
+            background: rgba(239, 68, 68, 0.18);
+            color: #fca5a5;
+        }
+
+        .doc-tag-fix {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 5px;
+            font-size: 0.82em;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.18);
+            color: #6ee7b7;
+        }
+
+        .doc-demo-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            margin-top: 16px;
+        }
+
+        .docs-footer-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            border-top: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.02);
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -422,7 +846,7 @@
         </div>
     </div>
 
-    <!-- TOP MODE SWITCHER TAB: BEFORE vs AFTER SAGA -->
+    <!-- TOP MODE SWITCHER TAB: BEFORE vs AFTER SAGA vs DOCS -->
     <div class="mode-tabs">
         <button class="mode-tab active-before" id="tab-before" onclick="switchMode('before')">
             <div>
@@ -439,26 +863,27 @@
             </div>
             <span class="tab-pill">After SAGA</span>
         </button>
+
+        <button class="mode-tab" id="tab-docs" onclick="switchMode('docs')">
+            <div>
+                <span class="tab-title">3. TÀI LIỆU THUYẾT TRÌNH (Docs)</span>
+                <span class="tab-sub">Lý thuyết SAGA, Data Anomalies, Countermeasures &amp; Hướng dẫn Implement</span>
+            </div>
+            <span class="tab-pill">Docs &bull; 7 mục</span>
+        </button>
     </div>
 
-    <!-- SAGA WORKFLOW ARCHITECTURE (4 NODES) -->
+    <div id="demo-view">
+    <!-- WORKFLOW PIPELINE (T1 -> T2 -> T3) -->
     <div class="diagram-section">
         <div class="diagram-title">
             <span id="pipeline-title">Naive Sequential Pipeline (Không SAGA)</span>
             <span style="font-size: 12px; color: var(--text-muted); text-transform: none;">
-                Orchestrator (:8080) &rarr; Order (:8081) &rarr; Inventory (:8082) &rarr; Payment (:8083)
+                T1: Order (:8081) &rarr; T2: Inventory (:8082) &rarr; T3: Payment (:8083)
             </span>
         </div>
 
         <div class="workflow-nodes">
-            <div class="node-card" id="node-orchestrator">
-                <div class="node-icon">🎼</div>
-                <div class="node-name">Saga Orchestrator</div>
-                <div class="node-sub">Port 8080 &bull; Điều phối</div>
-            </div>
-
-            <div class="arrow">&rarr;</div>
-
             <div class="node-card" id="node-order">
                 <div class="node-icon">📦</div>
                 <div class="node-name">T1: Order Service</div>
@@ -583,12 +1008,58 @@
             </tbody>
         </table>
     </div>
+    </div><!-- /#demo-view -->
+
+    <!-- PRESENTATION DOCS VIEW -->
+    <div id="docs-view" style="display: none;">
+        <div class="docs-layout">
+            <aside class="docs-sidebar">
+                <div class="docs-sidebar-title">📚 Mục Lục Thuyết Trình</div>
+                <div class="docs-nav-list" id="docs-nav-list"></div>
+
+                <div class="docs-quick-box">
+                    <div class="docs-quick-label">🎬 Chuyển Nhanh Sang Demo</div>
+                    <div class="docs-quick-actions">
+                        <button class="btn-doc-jump" onclick="switchMode('before')">1. Before SAGA</button>
+                        <button class="btn-doc-jump" onclick="switchMode('after')">2. After SAGA</button>
+                    </div>
+                    <a class="btn-doc-jump" href="/swagger-ui.html" target="_blank" rel="noopener noreferrer">Swagger UI (:8080) ↗</a>
+                </div>
+            </aside>
+
+            <section class="docs-reader">
+                <div class="docs-toolbar">
+                    <div class="docs-file-meta">
+                        <span class="docs-file-pill" id="docs-file-path">📄 docs/01-problem-context.md</span>
+                        <span class="docs-step-pill" id="docs-step-counter">1 / 6</span>
+                    </div>
+                    <div class="docs-controls">
+                        <button class="btn-doc-ctrl" onclick="adjustDocsFont(-1)" title="Thu nhỏ chữ">A-</button>
+                        <button class="btn-doc-ctrl" onclick="adjustDocsFont(0)" title="Cỡ chữ mặc định">A</button>
+                        <button class="btn-doc-ctrl" onclick="adjustDocsFont(1)" title="Phóng to chữ khi chiếu slide">A+</button>
+                        <button class="btn-doc-ctrl" id="btn-doc-prev-top" onclick="stepDoc(-1)">&larr; Trước</button>
+                        <button class="btn-doc-ctrl" id="btn-doc-next-top" onclick="stepDoc(1)">Tiếp &rarr;</button>
+                    </div>
+                </div>
+
+                <article class="docs-article" id="docs-article"></article>
+
+                <div class="docs-footer-nav">
+                    <button class="btn-doc-ctrl" id="btn-doc-prev-bottom" onclick="stepDoc(-1)">&larr; Bài trước</button>
+                    <button class="btn-doc-ctrl" id="btn-doc-next-bottom" onclick="stepDoc(1)">Bài tiếp &rarr;</button>
+                </div>
+            </section>
+        </div>
+    </div>
 
     <script>
         const API_BASE = '/api';
-        let currentMode = 'before'; // 'before' | 'after'
+        let currentMode = 'before'; // 'before' | 'after' | 'docs'
+        let lastDemoMode = null;
         let selectedTestId = null;
         let isRunning = false;
+        let activeDocId = '01-problem-context';
+        let docsFontSize = 15;
 
         const TEST_CASES = [
             {
@@ -614,9 +1085,9 @@
                 beforeBadge: 'BUG-3 • Conflicting Retry',
                 beforeTitle: '3. Gửi trùng -> Trừ x2',
                 beforeDesc: 'Thiếu Operation Log theo orderId: mạng retry gửi lại làm trừ kho/ví 2 lần.',
-                afterBadge: 'Countermeasure 3 • Version/Op Log',
+                afterBadge: 'Countermeasure 3 • Op Log (Mở rộng)',
                 afterTitle: '3. Operation Log (Idempotency)',
-                afterDesc: 'Ghi trạng thái orderId: gọi lại N lần vẫn chỉ thay đổi dữ liệu đúng 1 lần.'
+                afterDesc: 'Áp dụng mở rộng Version File theo orderId: gọi lại N lần vẫn chỉ xử lý đúng 1 lần.'
             },
             {
                 id: 'happy',
@@ -634,24 +1105,45 @@
             currentMode = mode;
             const tabBefore = document.getElementById('tab-before');
             const tabAfter = document.getElementById('tab-after');
-            const pipelineTitle = document.getElementById('pipeline-title');
+            const tabDocs = document.getElementById('tab-docs');
+            const demoView = document.getElementById('demo-view');
+            const docsView = document.getElementById('docs-view');
 
             tabBefore.className = 'mode-tab' + (mode === 'before' ? ' active-before' : '');
             tabAfter.className = 'mode-tab' + (mode === 'after' ? ' active-after' : '');
+            tabDocs.className = 'mode-tab' + (mode === 'docs' ? ' active-docs' : '');
 
+            if (mode === 'docs') {
+                demoView.style.display = 'none';
+                docsView.style.display = 'block';
+                renderDocsView();
+                return;
+            }
+
+            docsView.style.display = 'none';
+            demoView.style.display = 'block';
+
+            const modeChanged = lastDemoMode !== mode;
+            lastDemoMode = mode;
+
+            const pipelineTitle = document.getElementById('pipeline-title');
             pipelineTitle.textContent = mode === 'before'
                 ? 'Naive Sequential Pipeline (Trước SAGA)'
                 : 'SAGA Orchestrator Pipeline (Sau SAGA — Countermeasures)';
             pipelineTitle.style.color = 'var(--accent-blue)';
 
-            renderActionButtons();
-            resetNodeHighlights();
-            resetTestCasePanel();
-            clearLogs();
-            appendLog(mode === 'before'
-                ? 'Mode: BEFORE SAGA. Chọn 1 trong 3 Test Cases (Data Anomalies) hoặc Happy Path.'
-                : 'Mode: AFTER SAGA. Chọn lại từng Test Case để kiểm chứng Countermeasures vá lỗi.',
-                'info', 'INFO ', 'dashboard');
+            if (modeChanged) {
+                selectedTestId = null;
+                renderActionButtons();
+                resetNodeHighlights();
+                resetTestCasePanel();
+                clearLogs();
+                appendLog(mode === 'before'
+                    ? 'Mode: BEFORE SAGA. Chọn 1 trong 3 Test Cases (Data Anomalies) hoặc Happy Path.'
+                    : 'Mode: AFTER SAGA. Chọn lại từng Test Case để kiểm chứng Countermeasures vá lỗi.',
+                    'info', 'INFO ', 'dashboard');
+            }
+            fetchSystemState();
         }
 
         function renderActionButtons() {
@@ -777,7 +1269,7 @@
         }
 
         function resetNodeHighlights() {
-            ['node-orchestrator', 'node-order', 'node-inventory', 'node-payment'].forEach(id => {
+            ['node-order', 'node-inventory', 'node-payment'].forEach(id => {
                 const n = document.getElementById(id);
                 if (n) n.className = 'node-card';
             });
@@ -830,7 +1322,7 @@
             statusPill.textContent = 'RUNNING...';
             statusPill.style.background = '#1e40af';
             statusPill.style.color = '#dbeafe';
-            highlightNode('node-orchestrator', 'active');
+            highlightNode('node-order', 'active');
 
             try {
                 await fetch(`${API_BASE}/system/reset`, { method: 'POST' });
@@ -984,9 +1476,9 @@
                 return {
                     ok,
                     tag: ok ? 'PASS • OPERATION LOG' : 'DUPLICATE BUG DETECTED',
-                    headline: ok ? 'Đã vá bằng Version / Operation Log (Idempotency)' : 'PHÁT HIỆN BUG-3: Conflicting / Duplicate Updates (Trừ x2)!',
+                    headline: ok ? 'Đã vá bằng Operation Log / Idempotency (Áp dụng mở rộng Version File)' : 'PHÁT HIỆN BUG-3: Conflicting / Duplicate Updates (Trừ x2)!',
                     explain: ok
-                        ? 'Operation Log ghi nhận orderId đã xử lý -> trả về Idempotent OK, không xung đột hay trừ lặp lại.'
+                        ? 'Operation Log (mở rộng từ Version File theo orderId) ghi nhận giao dịch đã xử lý -> trả về Idempotent OK, không trừ lặp lại.'
                         : `Do thiếu Operation Log theo orderId, retry làm khách bị trừ $${(bWal.balance - aWal.balance).toFixed(2)} (gấp đôi!) và kho bị giữ dư 1 máy!`,
                     assertions
                 };
@@ -1010,18 +1502,15 @@
         function updateNodeVisuals(verdict, caseId) {
             if (verdict.ok) {
                 if (caseId === 'happy' || caseId === 'case3' || caseId === 'case2') {
-                    highlightNode('node-orchestrator', 'success');
                     highlightNode('node-order', 'success');
                     highlightNode('node-inventory', 'success');
                     highlightNode('node-payment', 'success');
                 } else if (caseId === 'case1') {
-                    highlightNode('node-orchestrator', 'compensating');
                     highlightNode('node-order', 'compensating');
                     highlightNode('node-inventory', 'compensating');
                     highlightNode('node-payment', 'error');
                 }
             } else {
-                highlightNode('node-orchestrator', 'active');
                 highlightNode('node-order', 'active');
                 if (caseId === 'case2') {
                     highlightNode('node-inventory', 'error');
@@ -1078,10 +1567,797 @@
             }
         }
 
+        const DOCS_ITEMS = [
+            {
+                id: 'readme',
+                num: '00',
+                title: 'Tổng quan (README)',
+                sub: 'Tech stack, Quick start & Sitemap',
+                file: 'README.md',
+                html: `
+                    <h1>SAGA Pattern trong Spring Boot</h1>
+                    <p>Demo <strong>Saga Orchestration</strong> để quản lý giao dịch phân tán và giao dịch bù trừ (compensating transaction) trong kiến trúc microservices.</p>
+                    <p><strong>Tech stack:</strong> Java 21, Spring Boot 3.4.1, REST, Docker Compose, JUnit 5.</p>
+
+                    <h2>Quick start</h2>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>docker-compose up --build</code></pre>
+                    </div>
+                    <p>Mở dashboard: <code>http://localhost:8080</code></p>
+
+                    <h2>Tài liệu</h2>
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr><th>#</th><th>Nội dung</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1</strong></td>
+                                    <td><button class="doc-link-btn" onclick="selectDoc('01-problem-context')">Problem &amp; Context</button>: Partial Commit &amp; 3 Data Anomalies (Lost Updates, Dirty Reads, Fuzzy Reads)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2</strong></td>
+                                    <td><button class="doc-link-btn" onclick="selectDoc('02-saga-pattern')">Saga Pattern</button>: lý thuyết SAGA, Choreography vs Orchestration &amp; 6 Countermeasures (Microsoft Azure)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3</strong></td>
+                                    <td><button class="doc-link-btn" onclick="selectDoc('03-golden-rules')">3 Test Cases Đối Chứng</button>: đối chứng Trước vs Sau (Atomicity, Semantic Lock, Operation Log Idempotency — áp dụng mở rộng từ Version File)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>4</strong></td>
+                                    <td><button class="doc-link-btn" onclick="selectDoc('04-related-info')">Related Info</button>: tài liệu tham khảo gốc (Paper 1987, Microsoft, microservices.io)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>5</strong></td>
+                                    <td><button class="doc-link-btn" onclick="selectDoc('05-how-to-run')">How to run</button>: chạy demo, chạy bộ test đối chứng, Postman</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>6</strong></td>
+                                    <td><button class="doc-link-btn" onclick="selectDoc('06-implementation-guide')">Implementation Guide</button>: thứ tự implement từ State Diagram &rarr; DTO/SagaInstance &rarr; 3 Services (T<sub>k</sub> - C<sub>k</sub>) &rarr; Orchestrator Flow</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h2>Cấu trúc project</h2>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>common-dto/           DTO dùng chung
+saga-orchestrator/    Nhạc trưởng: chỉ điều phối Saga (:8080)
+order-service/        Đơn hàng (:8081)
+inventory-service/    Kho (:8082)
+payment-service/      Thanh toán (:8083)
+postman/              Postman collection</code></pre>
+                    </div>
+                `
+            },
+            {
+                id: '01-problem-context',
+                num: '01',
+                title: 'Problem & Context',
+                sub: 'Partial Commit & 3 Data Anomalies',
+                file: 'docs/01-problem-context.md',
+                html: `
+                    <h1>1. Problem &amp; Context: Giao dịch Phân tán &amp; Data Anomalies trong SAGA</h1>
+
+                    <h2>1. Từ Monolith sang Microservices</h2>
+                    <p>Trong <strong>Monolith</strong>, toàn bộ ứng dụng dùng chung 1 Database. Khi đặt hàng, chỉ cần bọc trong <code>@Transactional</code>:</p>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>BEGIN TRANSACTION;
+  Create Order;
+  Deduct Inventory;
+  Debit Wallet;
+COMMIT; -- Lỗi ở bất kỳ đâu -&gt; DB tự ROLLBACK sạch sẽ (Đảm bảo ACID)</code></pre>
+                    </div>
+
+                    <p>Khi tách sang <strong>Microservices</strong> theo nguyên tắc <strong>Database-per-Service</strong>:</p>
+                    <ul>
+                        <li><code>Order Service</code> (:8081) sở hữu dữ liệu đơn hàng.</li>
+                        <li><code>Inventory Service</code> (:8082) sở hữu dữ liệu tồn kho.</li>
+                        <li><code>Payment Service</code> (:8083) sở hữu dữ liệu ví tiền.</li>
+                    </ul>
+
+                    <div class="doc-callout">
+                        <strong>Lưu ý về bản Demo:</strong> Thực tế mỗi service có một Database riêng. Trong <strong>bản demo này không cần cài đặt DB</strong>; mỗi service giữ một <strong>In-Memory Store độc lập</strong> (<code>ConcurrentHashMap</code> + <code>synchronized</code>) để mô phỏng Local Transaction tách rời và reset trạng thái nhanh khi thuyết trình.
+                    </div>
+
+                    <hr>
+
+                    <h2>2. Hai nhóm vấn đề khi Microservices thiếu Isolation (Theo Microsoft Azure Saga)</h2>
+
+                    <h3>A. Partial Commit (Mất tính Atomicity)</h3>
+                    <p>Mỗi service tự commit Local Transaction của mình. Nếu Bước 1 (<code>Order</code>), Bước 2 (<code>Inventory</code>) đã commit mà Bước 3 (<code>Payment</code>) thất bại &rarr; không có SQL <code>ROLLBACK</code> nào cứu được 2 service trước &rarr; <strong>lệch dữ liệu</strong> (kho mất hàng, đơn treo).</p>
+
+                    <h3>B. Potential Data Anomalies (Bất thường dữ liệu do thiếu Isolation)</h3>
+                    <p>Vì không có khóa liên service (Built-in Isolation), các Saga chạy song song hoặc lỗi giữa chừng sẽ gây ra <strong>3 hiện tượng bất thường điển hình</strong>:</p>
+
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Data Anomaly</th>
+                                    <th>Bản chất vấn đề</th>
+                                    <th>Ví dụ trong hệ thống đặt hàng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1. Lost Updates</strong></td>
+                                    <td>Một Saga ghi đè hoặc làm mất cập nhật của một Saga khác vì không xét đến thay đổi đang diễn ra.</td>
+                                    <td>Saga A ghi đè số dư/tồn kho cố định hoặc trừ thẳng mà bỏ qua thay đổi của Saga B &rarr; mất dữ liệu cập nhật.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2. Dirty Reads</strong></td>
+                                    <td>Một Saga hoặc transaction khác <strong>đọc phải dữ liệu chưa hoàn tất</strong> của Saga đang chạy (sau đó Saga đó có thể bị rollback/bù trừ).</td>
+                                    <td>Saga A vừa trừ thẳng kho xong nhưng chưa thanh toán; bên ngoài nhìn vào tưởng hàng đã bán đứt (<code>available</code> giảm), ngay sau đó Saga A thất bại ở Payment!</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3. Fuzzy (Nonrepeatable) Reads</strong></td>
+                                    <td>Các bước khác nhau trong cùng một Saga đọc ra <strong>giá trị không nhất quán</strong> vì có cập nhật chen vào giữa hai lần đọc.</td>
+                                    <td>Bước 1 kiểm tra giá/tồn kho là X, đến bước 3 thanh toán thì dữ liệu đã bị giao dịch khác sửa thành Y.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p><em>(Cộng thêm trong mạng phân tán: nếu lệnh bị gửi trùng khi timeout mà service không lưu vết thao tác theo <code>orderId</code> &rarr; trừ kho / trừ tiền 2 lần).</em></p>
+
+                    <hr>
+
+                    <h2>3. Vì sao không dùng 2PC (Two-Phase Commit) để khóa cứng?</h2>
+                    <p><strong>2PC</strong> mang <code>@Transactional</code> lên môi trường phân tán qua 2 pha (<strong>Prepare</strong> &rarr; <strong>Commit/Rollback</strong>) bằng cách <strong>khóa chặt (lock)</strong> dữ liệu ở mọi service suốt thời gian giao tiếp mạng.</p>
+                    <p><strong>Lý do Microservices tránh dùng 2PC:</strong></p>
+                    <ul>
+                        <li><strong>Khóa lâu (Blocking Locks):</strong> Thông lượng (throughput) tụt mạnh do giữ lock qua mạng.</li>
+                        <li><strong>SPOF:</strong> Coordinator sập giữa chừng thì các service bị treo lock.</li>
+                        <li><strong>Phụ thuộc chặt:</strong> Mọi service/DB phải hỗ trợ XA và online cùng lúc.</li>
+                    </ul>
+                    <p>&rarr; Thay vào đó, <strong>SAGA Pattern</strong> chấp nhận thiếu Isolation ở mức hạ tầng và dùng <strong>Compensating Transactions + Các chiến lược chống Data Anomalies</strong> ở mức ứng dụng (xem <button class="doc-link-btn" onclick="selectDoc('02-saga-pattern')">02-saga-pattern.md</button>).</p>
+                `
+            },
+            {
+                id: '02-saga-pattern',
+                num: '02',
+                title: 'Saga Pattern',
+                sub: 'Lý thuyết & 6 Countermeasures',
+                file: 'docs/02-saga-pattern.md',
+                html: `
+                    <h1>2. Saga Pattern: Lý thuyết, 2 Cách Implement &amp; Chiến lược chống Data Anomalies</h1>
+
+                    <h2>1. Lý thuyết cốt lõi của SAGA Pattern</h2>
+                    <p><strong>SAGA</strong> chia một giao dịch phân tán thành <strong>chuỗi các Local Transactions</strong> (<code>T<sub>1</sub>, T<sub>2</sub>, …, T<sub>n</sub></code>):</p>
+                    <ul>
+                        <li>Mỗi bước <code>T<sub>i</sub></code> tự commit ngay vào dữ liệu của service đó (không giữ lock liên service).</li>
+                        <li>Mỗi bước tiến <code>T<sub>i</sub></code> (<strong>Forward / Compensable Action</strong>) đi kèm một bước lùi <code>C<sub>i</sub></code> (<strong>Compensating Action</strong> — bù trừ nghiệp vụ).</li>
+                        <li>Nếu bước <code>T<sub>k</sub></code> thất bại, SAGA tự động chạy chuỗi bù trừ <strong>theo thứ tự ngược lại (LIFO)</strong>: <code>C<sub>k-1</sub> &rarr; C<sub>k-2</sub> &rarr; … &rarr; C<sub>1</sub></code>.</li>
+                    </ul>
+
+                    <div class="doc-code-wrap">
+                        <pre><code>Chiều tiến (Forward):     T1 (Order) ──▶ T2 (Inventory) ──▶ T3 (Payment ❌ Lỗi!)
+                                                                 │
+Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────────┘</code></pre>
+                    </div>
+
+                    <hr>
+
+                    <h2>2. Hai cách implement SAGA</h2>
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Tiêu chí</th>
+                                    <th>Choreography (Biên đạo múa)</th>
+                                    <th>Orchestration (Nhạc trưởng)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Cơ chế</strong></td>
+                                    <td>Phân tán: mỗi service xong việc tự bắn <strong>Event</strong> lên Broker (Kafka/RabbitMQ).</td>
+                                    <td>Tập trung: 1 <strong>Orchestrator</strong> gửi <strong>Command</strong> điều phối từng service và gọi bù trừ khi lỗi.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phù hợp</strong></td>
+                                    <td>Quy trình ngắn (2–3 service), đơn giản.</td>
+                                    <td>Quy trình nhiều bước, cần theo dõi trạng thái tập trung &amp; dễ debug.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Giao tiếp</strong></td>
+                                    <td>Gần như bắt buộc dùng Message Broker.</td>
+                                    <td>REST hoặc Broker đều được <em>(Demo dùng REST + Orchestrator đứng ngoài 3 services)</em>.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr>
+
+                    <h2>3. Các chiến lược chống Data Anomalies (Theo Microsoft Azure Saga)</h2>
+                    <p>Để khắc phục 3 bất thường (<em>Lost Updates, Dirty Reads, Fuzzy Reads</em>) ở <button class="doc-link-btn" onclick="selectDoc('01-problem-context')">01-problem-context.md</button>, tài liệu chuẩn của Microsoft &amp; Chris Richardson đưa ra <strong>6 Countermeasures</strong>:</p>
+
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Chiến lược (Countermeasure)</th>
+                                    <th>Cách hoạt động</th>
+                                    <th>Áp dụng trong Demo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1. Semantic Lock</strong></td>
+                                    <td>Dùng khóa ở tầng ứng dụng (ví dụ <code>Order = PENDING</code>, <code>Inventory = reservedStock</code>) để báo hiệu dữ liệu đang trong một Saga chưa hoàn tất &rarr; chống <strong>Dirty Read</strong>.</td>
+                                    <td><span class="doc-tag-fix">Có (Case 2)</span> Tách <code>availableStock</code> và <code>reservedStock</code>, <code>Order = PENDING</code>.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2. Commutative Updates</strong></td>
+                                    <td>Thiết kế các phép cập nhật có tính giao hoán (<code>+amount</code> / <code>-amount</code>, <code>+qty</code> / <code>-qty</code>), chạy theo thứ tự nào cũng cho cùng kết quả &rarr; chống <strong>Lost Updates</strong>.</td>
+                                    <td><span class="doc-tag-fix">Có (Case 1)</span> Bù trừ cộng/trừ delta (<code>+qty</code>, <code>+amount</code>), không ghi đè giá trị cứng.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3. Version File (Operation Log)</strong></td>
+                                    <td>Ghi lại nhật ký các thao tác trên một bản ghi để có thể sắp xếp lại đúng thứ tự thực thi &rarr; chủ yếu chống xung đột do thao tác không giao hoán bị chạy sai thứ tự.</td>
+                                    <td><span class="doc-tag-fix">Có (Case 3 — Áp dụng mở rộng)</span> Dùng Operation Log (<code>reservationStates</code> &amp; <code>paymentStates</code> theo <code>orderId</code>) để chống trùng lệnh khi retry (<strong>Idempotency</strong>).</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>4. Pessimistic View</strong></td>
+                                    <td>Sắp xếp lại thứ tự Saga: đẩy các bước cập nhật nhạy cảm sang các bước retryable về sau, đặt bước dễ lỗi/dễ bù trừ (<code>Inventory</code>) lên trước (<code>Payment</code>) để giảm rủi ro Dirty Read.</td>
+                                    <td><span class="doc-tag-fix">Có (Luồng chuẩn)</span> Chạy <code>Order -&gt; Inventory -&gt; Payment -&gt; Confirm</code>.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>5. Reread Value(s)</strong></td>
+                                    <td>Đọc lại dữ liệu ngay trước khi ghi đè (một dạng <strong>Optimistic Offline Lock</strong>) để xác nhận giá trị chưa bị Saga khác sửa đổi; nếu đã đổi thì dừng và khởi động lại Saga &rarr; chủ yếu chống <strong>Lost Updates</strong> (ngăn dirty writes; cũng hỗ trợ phát hiện <strong>Fuzzy Reads</strong>).</td>
+                                    <td><em>Ghi chú lý thuyết (mở rộng khi dùng DB/Version).</em></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>6. Risk-based Concurrency (By Value)</strong></td>
+                                    <td>Chọn cơ chế đồng bộ theo mức độ rủi ro và giá trị nghiệp vụ (<em>Risk-based concurrency based on value</em>): giao dịch rủi ro/giá trị thấp dùng Saga, giao dịch rủi ro cực cao có thể dùng cơ chế khóa chặt.</td>
+                                    <td><em>Ghi chú kiến trúc khi thiết kế hệ thống.</em></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p>&rarr; Chi tiết cách từng Case trên Demo chứng minh <strong>Trước (Anomaly/Bug) vs Sau (Countermeasure)</strong> xem tại <button class="doc-link-btn" onclick="selectDoc('03-golden-rules')">03-golden-rules.md</button>.</p>
+                `
+            },
+            {
+                id: '03-golden-rules',
+                num: '03',
+                title: '3 Test Cases Đối Chứng',
+                sub: 'Before vs After Mapping',
+                file: 'docs/03-golden-rules.md',
+                html: `
+                    <h1>3. 3 Test Cases Đối Chứng: Data Anomalies (Trước) vs Countermeasures (Sau)</h1>
+                    <p>Bám sát tài liệu chuẩn ở <button class="doc-link-btn" onclick="selectDoc('01-problem-context')">01-problem-context.md</button> và <button class="doc-link-btn" onclick="selectDoc('02-saga-pattern')">02-saga-pattern.md</button>, code demo chứng minh trực tiếp <strong>3 cặp đối chứng</strong> (cùng nút <strong>Happy Path</strong>):</p>
+
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Case</th>
+                                    <th>Bất thường / Lỗi khi CHƯA có SAGA (Before)</th>
+                                    <th>Chiến lược vá lỗi trong SAGA (After)</th>
+                                    <th>Test Class chứng minh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Case 1</strong></td>
+                                    <td><span class="doc-tag-bug">BUG-1: Partial Commit</span><br>Payment lỗi nhưng <code>Order</code> &amp; <code>Inventory</code> đã commit trước đó không tự hoàn tác &rarr; kho mất hàng, đơn treo.</td>
+                                    <td><span class="doc-tag-fix">Compensating Transaction (LIFO) + Commutative Updates</span><br>Orchestrator chạy bù trừ ngược <code>Release Inventory (+qty)</code> &rarr; <code>Cancel Order</code>.</td>
+                                    <td><code>WithoutSagaProblemsTest</code>, <code>Rule1_AtomicityAndCompensationTest</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Case 2</strong></td>
+                                    <td><span class="doc-tag-bug">BUG-2: Dirty Read / Mất Isolation</span><br>Gọi <code>POST /api/inventory/deduct</code> trừ thẳng vào <code>availableStock</code> (<code>reservedStock = 0</code>). Bên ngoài nhìn vào thấy kho bị trừ đứt dù đơn chưa thanh toán.</td>
+                                    <td><span class="doc-tag-fix">Semantic Lock (PENDING / RESERVED)</span><br>Gọi <code>POST /api/inventory/reserve</code> giữ tạm vào <code>reservedStock</code>, <code>Order = PENDING</code>. Chỉ bước cuối mới <code>Confirm</code> hoặc <code>Release</code>.</td>
+                                    <td><code>WithoutSagaProblemsTest</code>, <code>Rule2_SemanticLockIsolationTest</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Case 3</strong></td>
+                                    <td><span class="doc-tag-bug">BUG-3: Conflicting / Duplicate Updates</span><br>Không ghi Version/Operation Log theo <code>orderId</code> &rarr; mạng timeout gửi trùng lệnh làm trừ kho &amp; ví <strong>2 lần</strong>.</td>
+                                    <td><span class="doc-tag-fix">Version File / Operation Log <em>(Áp dụng mở rộng: Idempotency)</em></span><br>Định nghĩa gốc ghi nhật ký thao tác để sắp xếp lại đúng thứ tự; trong Demo mở rộng lưu trạng thái từng <code>orderId</code> (<code>RESERVED</code>, <code>CONFIRMED</code>, <code>COMPENSATED</code>, <code>DEBITED</code>, <code>REFUNDED</code>) để chống trùng lệnh khi retry. Gọi <em>N</em> lần vẫn chỉ đổi dữ liệu đúng 1 lần.</td>
+                                    <td><code>Rule3_InventoryIdempotencyTest</code>, <code>Rule3_PaymentIdempotencyTest</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr>
+
+                    <h2>Chi tiết luồng thực thi</h2>
+
+                    <h3>Case 1 — Partial Commit vs LIFO Compensation</h3>
+                    <ul>
+                        <li><strong>Trước SAGA (<code>POST /api/orders/without-saga?mode=partial_commit</code>):</strong> <code>CUST-POOR</code> ($50) đặt <code>PROD-002</code> ($1,000). Kho bị trừ (<code>5 -&gt; 4</code>), Payment lỗi, luồng dừng luôn &rarr; kho mất 1 máy, đơn treo <code>PENDING</code>.</li>
+                        <li><strong>Sau SAGA (<code>POST /api/orders</code>):</strong> Orchestrator lưu các bước bù trừ vào <code>Deque&lt;Compensation&gt;</code>. Khi <code>Payment</code> lỗi, <code>abort()</code> chạy ngược: <code>Release Inventory</code> (<code>4 -&gt; 5</code>) &rarr; <code>Cancel Order</code> (<code>CANCELLED</code>).</li>
+                    </ul>
+
+                    <h3>Case 2 — Dirty Read vs Semantic Lock</h3>
+                    <ul>
+                        <li><strong>Trước SAGA (<code>POST /api/orders/without-saga?mode=no_semantic_lock</code>):</strong> Gọi <code>POST /api/inventory/deduct</code> trừ thẳng <code>availableStock</code> (<code>5 -&gt; 4, reserved = 0</code>). Không đánh dấu trạng thái giữ tạm cho giao dịch đang chạy.</li>
+                        <li><strong>Sau SAGA (<code>POST /api/orders?delayBeforePaymentMs=1400</code>):</strong> Gọi <code>POST /api/inventory/reserve</code> chuyển sang <code>available = 4, reserved = 1</code> và <code>Order = PENDING</code> (<strong>Semantic Lock</strong>). Nếu bước sau thành công mới xóa <code>reservedStock</code> (Confirm), nếu lỗi thì trả lại <code>availableStock</code>.</li>
+                    </ul>
+
+                    <h3>Case 3 — Duplicate Updates vs Operation Log (Áp dụng mở rộng từ Version File)</h3>
+                    <ul>
+                        <li><strong>Trước SAGA (<code>POST /api/orders/without-saga?mode=duplicate_request</code>):</strong> Gửi lặp lại <code>reserve</code> và <code>debit</code> 2 lần cho cùng <code>orderId</code> &rarr; kho mất 2 máy, ví bị trừ gấp đôi (<code>$5,000 -&gt; $1,000</code>).</li>
+                        <li><strong>Sau SAGA (<code>POST /api/orders/duplicate-check</code>):</strong> <code>InventoryService</code> kiểm tra <code>reservationStates</code>, <code>PaymentService</code> kiểm tra <code>paymentStates</code> theo <code>orderId</code> &rarr; lần gọi thứ 2 trả về <code>Idempotent OK</code>, dữ liệu chỉ thay đổi đúng 1 lần (<code>$5,000 -&gt; $3,000</code>, kho trừ 1).</li>
+                        <li><strong>Lưu ý phân biệt lý thuyết vs Demo:</strong> <em>Version File</em> theo định nghĩa gốc của Saga dùng để ghi lại các thao tác trên bản ghi nhằm sắp xếp lại đúng thứ tự thực thi (chống xung đột thứ tự); Demo mở rộng áp dụng Operation Log theo <code>orderId</code> để đảm bảo <strong>Idempotency</strong> khi mạng retry.</li>
+                    </ul>
+
+                    <hr>
+
+                    <h2>Ghi chú thiết kế đi kèm (Pessimistic View &amp; Resilience)</h2>
+                    <ul>
+                        <li><strong>Pessimistic View (Step Ordering):</strong> Luồng chuẩn luôn đặt <code>Inventory</code> trước <code>Payment -&gt; Confirm</code> để hạn chế tối đa việc phải hoàn tiền.</li>
+                        <li><strong>Retry &amp; DLQ:</strong> Trong thực tế cần kết hợp retry (Orchestrator có sẵn <code>executeWithRetry</code>) và Dead Letter Queue cho các lệnh bù trừ.</li>
+                    </ul>
+
+                    <div class="doc-demo-bar">
+                        <span style="font-weight: 700; color: #ddd6fe; margin-right: 4px;">⚡ Chạy ngay trên Live Demo:</span>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('before', 'case1')">Before: Case 1 (Bug-1)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case1')">After: Case 1 (Fix)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('before', 'case2')">Before: Case 2 (Bug-2)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case2')">After: Case 2 (Fix)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('before', 'case3')">Before: Case 3 (Bug-3)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case3')">After: Case 3 (Fix)</button>
+                    </div>
+                `
+            },
+            {
+                id: '04-related-info',
+                num: '04',
+                title: 'Related Info',
+                sub: 'Paper 1987 & Tài liệu gốc',
+                file: 'docs/04-related-info.md',
+                html: `
+                    <h1>4. Related Info</h1>
+
+                    <h2>Tài liệu về Saga</h2>
+                    <ul>
+                        <li>Microsoft Azure Architecture Center, Saga pattern: <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/saga#related-resources" target="_blank" rel="noopener noreferrer">https://learn.microsoft.com/en-us/azure/architecture/patterns/saga#related-resources</a></li>
+                        <li>Chris Richardson, microservices.io, Saga: <a href="https://microservices.io/patterns/data/saga.html" target="_blank" rel="noopener noreferrer">https://microservices.io/patterns/data/saga.html</a></li>
+                    </ul>
+
+                    <h2>Nguồn gốc</h2>
+                    <ul>
+                        <li>Hector Garcia-Molina, Kenneth Salem, <em>Sagas</em>, ACM SIGMOD 1987, trang 249-259. Bài báo gốc về Long-Lived Transactions và compensating transactions.</li>
+                        <li>Chris Richardson, <em>Microservices Patterns</em>, chương 4 "Managing transactions with sagas".</li>
+                    </ul>
+
+                    <h2>Chủ đề liên quan</h2>
+                    <ul>
+                        <li>Two-Phase Commit (2PC) và vì sao ít dùng trong microservices.</li>
+                        <li>Transactional Outbox pattern.</li>
+                        <li>Idempotent Consumer.</li>
+                        <li>Dead Letter Queue và retry với exponential backoff.</li>
+                    </ul>
+                `
+            },
+            {
+                id: '05-how-to-run',
+                num: '05',
+                title: 'How to Run & Kiến trúc',
+                sub: 'Kiến trúc, Dữ liệu mẫu, Test & API',
+                file: 'docs/05-how-to-run.md',
+                html: `
+                    <h1>5. How to run</h1>
+
+                    <h2>Kiến trúc demo</h2>
+                    <p>Orchestrator đứng <strong>ngoài</strong> 3 service nghiệp vụ. Nó chỉ điều phối luồng, còn mỗi service tự giữ dữ liệu độc lập (dùng In-Memory Store — không cần cài thêm Database để chạy nhẹ và reset đồng bộ nhanh khi demo).</p>
+
+                    <div class="doc-code-wrap">
+                        <pre><code>          Dashboard (http://localhost:8080)
+                       │ REST
+                       ▼
+             SAGA ORCHESTRATOR (:8080)
+        Forward: T1 → T2 → T3 → T4
+        Lỗi: chạy compensation ngược lại
+         │             │              │
+         ▼             ▼              ▼
+   ORDER (:8081)  INVENTORY (:8082)  PAYMENT (:8083)</code></pre>
+                    </div>
+
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr><th>Bước</th><th>Forward (service)</th><th>Compensation</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>T1</strong></td><td>Order: tạo đơn <code>PENDING</code></td><td>Order: hủy đơn (<code>CANCELLED</code>)</td></tr>
+                                <tr><td><strong>T2</strong></td><td>Inventory: giữ hàng</td><td>Inventory: nhả hàng</td></tr>
+                                <tr><td><strong>T3</strong></td><td>Payment: trừ tiền</td><td>Payment: hoàn tiền</td></tr>
+                                <tr><td><strong>T4</strong></td><td>Confirm Inventory và Order: <code>COMPLETED</code></td><td><em>(không cần)</em></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p>Orchestrator đẩy compensation vào một stack sau mỗi bước thành công. Khi có lỗi, nó chạy ngược lại theo thứ tự LIFO.</p>
+
+                    <p><strong>Dữ liệu mẫu</strong></p>
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr><th>Loại</th><th>ID</th><th>Ghi chú</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Sản phẩm</td><td><code>PROD-001</code></td><td>MacBook Pro, tồn 10, giá $2,000</td></tr>
+                                <tr><td>Sản phẩm</td><td><code>PROD-002</code></td><td>iPhone 15 Pro, tồn 5, giá $1,000</td></tr>
+                                <tr><td>Sản phẩm</td><td><code>PROD-OUT-OF-STOCK</code></td><td>PS5 Pro, tồn 0</td></tr>
+                                <tr><td>Ví</td><td><code>CUST-RICH</code></td><td>$5,000</td></tr>
+                                <tr><td>Ví</td><td><code>CUST-POOR</code></td><td>$50</td></tr>
+                                <tr><td>Ví</td><td><code>CUST-NORMAL</code></td><td>$1,200</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h2>Yêu cầu</h2>
+                    <p>JDK 21, Maven 3.8+ (hoặc Docker và Docker Compose).</p>
+
+                    <h2>Cách 1: Docker Compose</h2>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>docker-compose up --build</code></pre>
+                    </div>
+
+                    <h2>Cách 2: Maven</h2>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>mvn clean package -DskipTests
+start-all.bat        # Windows
+./start-all.sh       # Linux/macOS</code></pre>
+                    </div>
+
+                    <h2>Chạy bộ Test Đối Chứng (Dò lỗi &rarr; Vá từng bước)</h2>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code># Chạy toàn bộ test across 4 modules
+mvn test
+
+# Chạy từng bài test minh họa khi thuyết trình:
+mvn test -Dtest=WithoutSagaProblemsTest            # Phần 1: Tái hiện Partial Commit &amp; Dirty Read
+mvn test -Dtest=Rule1_AtomicityAndCompensationTest # Case 1: LIFO Compensation + Commutative Updates
+mvn test -Dtest=Rule2_SemanticLockIsolationTest    # Case 2: Semantic Lock (PENDING/RESERVED)
+mvn test -Dtest=Rule3_*IdempotencyTest             # Case 3: Operation Log / Idempotency theo orderId</code></pre>
+                    </div>
+
+                    <h2>Demo trực quan trên Web Dashboard</h2>
+                    <p>Mở <code>http://localhost:8080</code>:</p>
+                    <ul>
+                        <li>Dùng các Tab trên cùng để chuyển đổi giữa <strong>1. TRƯỚC KHI CÓ SAGA</strong>, <strong>2. SAU KHI CÓ SAGA</strong> và <strong>3. TÀI LIỆU THUYẾT TRÌNH (Docs)</strong>.</li>
+                        <li>Chọn từng nút trong <strong>3 Test Cases</strong> (<code>Partial Commit</code>, <code>Dirty Read / Semantic Lock</code>, <code>Duplicate / Operation Log</code>) hoặc <strong>Happy Path</strong>:
+                            <ul>
+                                <li><strong>Bên trái:</strong> Log giao tiếp thực tế giữa 4 services (<code>:8080</code>, <code>:8081</code>, <code>:8082</code>, <code>:8083</code>).</li>
+                                <li><strong>Bên phải:</strong> Panel Test Case tự kiểm tra dữ liệu thực — tự báo mã Bug/Anomaly và tô <strong>ĐỎ</strong> khi chạy ở chế độ Trước SAGA, chuyển <strong>XANH</strong> khi chạy ở chế độ Sau SAGA.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h2>API</h2>
+                    <ul>
+                        <li>Dashboard: <a href="/" target="_blank" rel="noopener noreferrer">http://localhost:8080</a></li>
+                        <li>Swagger UI: <a href="/swagger-ui.html" target="_blank" rel="noopener noreferrer">http://localhost:8080/swagger-ui.html</a></li>
+                        <li>Postman: import <code>postman/SAGA_Pattern_Demo.postman_collection.json</code></li>
+                    </ul>
+
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code># Đặt hàng thành công
+curl -X POST http://localhost:8080/api/orders -H "Content-Type: application/json" \\
+  -d '{"customerId":"CUST-RICH","productId":"PROD-001","quantity":1,"amount":2000.00}'
+
+# Kích hoạt compensation
+curl -X POST http://localhost:8080/api/orders -H "Content-Type: application/json" \\
+  -d '{"customerId":"CUST-POOR","productId":"PROD-002","quantity":1,"amount":1000.00}'
+
+# Trạng thái hệ thống (kho, ví, đơn)
+curl http://localhost:8080/api/system/snapshot
+
+# Reset về dữ liệu ban đầu
+curl -X POST http://localhost:8080/api/system/reset</code></pre>
+                    </div>
+                `
+            },
+            {
+                id: '06-implementation-guide',
+                num: '06',
+                title: 'Implementation Guide',
+                sub: 'State Diagram -> DTO -> T-C -> Orchestrator',
+                file: 'docs/06-implementation-guide.md',
+                html: `
+                    <h1>6. Hướng dẫn Implement SAGA vào Project (Từ State Diagram đến Code)</h1>
+                    <p>Tài liệu này hướng dẫn <strong>thứ tự tư duy và implement code</strong> để xây dựng hệ thống SAGA Orchestration cho 3 microservices (<code>order-service</code>, <code>inventory-service</code>, <code>payment-service</code>) theo đúng 4 bước:</p>
+                    <ol>
+                        <li><strong>Thiết kế State Diagram</strong> (Hiểu luồng trạng thái chuẩn trước khi code)</li>
+                        <li><strong>Hiện thực hóa State &amp; Log tại <code>common-dto</code> và <code>SagaInstance</code></strong> (Biến State Diagram thành cấu trúc dữ liệu)</li>
+                        <li><strong>Xây dựng các cặp <code>T<sub>k</sub> - C<sub>k</sub></code> tại 3 Services nghiệp vụ</strong> (Forward Action + Compensating Action)</li>
+                        <li><strong>Lập trình <code>SagaOrchestratorService</code> &amp; nguyên lý chạy Stack LIFO</strong> (Điều phối luồng tiến &amp; lùi)</li>
+                    </ol>
+
+                    <hr>
+
+                    <h2>Bước 1: Thiết kế State Diagram (Hiểu luồng chạy đúng)</h2>
+                    <p>Về bản chất, một <strong>Saga Orchestrator là một State Machine (Máy trạng thái hữu hạn)</strong>. Trước khi viết bất kỳ dòng code gọi API nào, ta cần xác định rõ một đơn hàng sẽ đi qua những <strong>Node trạng thái (States)</strong> nào và những <strong>Bước chuyển (Transitions)</strong> nào:</p>
+
+                    <div class="doc-code-wrap">
+                        <pre><code>                        ┌──────────────────────────┐
+                        │           [*]            │
+                        └────────────┬─────────────┘
+                                     │ T1 thành công (Order Created)
+                                     ▼
+                        ┌──────────────────────────┐
+        ┌───────────────┤         PENDING          │ (Semantic Lock ở Order)
+        │               └────────────┬─────────────┘
+        │ T2 thất bại                │ T2 thành công (Stock Reserved)
+        │ -> Chạy C1 (Cancel Order)  ▼
+        │               ┌──────────────────────────┐
+        │               │    INVENTORY_RESERVED    │ (Semantic Lock ở Inventory)
+        │               └─────┬──────────────┬─────┘
+        │         T3 thất bại │              │ T3 (Debit Wallet) &amp;
+        │   -> Chạy C2 rồi C1 │              │ T4 (Confirm) thành công
+        ▼                     ▼              ▼
+┌────────────────────────────────┐        ┌──────────────────────────┐
+│           CANCELLED            │        │        COMPLETED         │
+│  (Đã bù trừ an toàn về gốc)    │        │   (Hoàn tất giao dịch)   │
+└────────────────────────────────┘        └──────────────────────────┘</code></pre>
+                    </div>
+
+                    <h3>Ý nghĩa của từng Node trên State Diagram:</h3>
+                    <ul>
+                        <li><code>PENDING</code> <strong>(Node 1 - Semantic Lock ở Order):</strong> Đơn hàng vừa được tạo ở Bước <code>T<sub>1</sub></code>, đang khóa tạm chờ giữ kho và thanh toán.</li>
+                        <li><code>INVENTORY_RESERVED</code> <strong>(Node 2 - Semantic Lock ở Inventory):</strong> Bước <code>T<sub>2</sub></code> đã giữ hàng thành công vào <code>reservedStock</code>, đang chờ Bước <code>T<sub>3</sub></code> trừ tiền.</li>
+                        <li><code>COMPLETED</code> <strong>(Node kết thúc thành công):</strong> Bước <code>T<sub>3</sub></code> (trừ tiền) và Bước <code>T<sub>4</sub></code> (xác nhận kho + chốt đơn) đều thành công.</li>
+                        <li><code>CANCELLED</code> <strong>(Node kết thúc sau khi đã bù trừ):</strong> Có lỗi xảy ra ở <code>T<sub>2</sub></code>, <code>T<sub>3</sub></code> hoặc <code>T<sub>4</sub></code>, hệ thống đã chạy ngược các bước bù trừ <code>C<sub>k</sub></code> để trả lại dữ liệu về trạng thái an toàn.</li>
+                    </ul>
+
+                    <hr>
+
+                    <h2>Bước 2: Hiện thực hóa State Diagram thành Code (<code>common-dto</code> &amp; <code>SagaInstance</code>)</h2>
+                    <p>Sau khi có State Diagram, bước tiếp theo là biến các <strong>Nodes (Trạng thái)</strong> và <strong>Edges (Bước chuyển / Log)</strong> trên sơ đồ thành code trong module <code>common-dto</code> và model <code>SagaInstance</code>.</p>
+
+                    <h3>2.1. Biểu diễn các Node trạng thái bằng <code>OrderStatus</code></h3>
+                    <p>File: <code>common-dto/.../OrderStatus.java</code></p>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>public enum OrderStatus {
+    PENDING,             // Node 1: Đơn mới tạo (Semantic Lock)
+    INVENTORY_RESERVED,  // Node 2: Đã giữ hàng trong kho
+    COMPLETED,           // Node đích (Happy Path)
+    CANCELLED            // Node đích sau khi đã chạy Compensation (Rollback)
+}</code></pre>
+                    </div>
+
+                    <h3>2.2. Biểu diễn các Bước chuyển (Transitions) bằng <code>SagaStepStatus</code> &amp; <code>SagaStepLog</code></h3>
+                    <p>File: <code>common-dto/.../SagaStepStatus.java</code> &amp; <code>SagaStepLog.java</code></p>
+                    <p>Mỗi khi đơn hàng di chuyển từ Node này sang Node khác trên State Diagram (gọi REST sang 1 service), hệ thống ghi lại bước chuyển đó đang ở trạng thái nào:</p>
+                    <ul>
+                        <li><code>PENDING</code>: Đang chờ xử lý.</li>
+                        <li><code>SUCCESS</code>: Bước tiến <code>T<sub>k</sub></code> thực thi thành công.</li>
+                        <li><code>FAILED</code>: Bước tiến <code>T<sub>k</sub></code> bị lỗi (kích hoạt rẽ nhánh bù trừ).</li>
+                        <li><code>COMPENSATING</code>: Đang bắt đầu chạy ngược bước bù trừ <code>C<sub>k</sub></code> (hoặc đang retry bù trừ).</li>
+                        <li><code>COMPENSATED</code>: Bước bù trừ <code>C<sub>k</sub></code> đã hoàn tất.</li>
+                    </ul>
+
+                    <h3>2.3. Hợp đồng giao tiếp Request/Response giữa các Service</h3>
+                    <p>Các DTO (<code>InventoryRequest</code>, <code>PaymentRequest</code>) đều bắt buộc chứa <strong><code>orderId</code></strong>:</p>
+                    <ul>
+                        <li>Giúp liên kết mọi thao tác ở 3 service rời rạc về cùng một phiên Saga.</li>
+                        <li>Đóng vai trò là <strong>Idempotency Key</strong> để các service ghi nhận <em>Operation Log</em> (chống trừ kho / trừ tiền 2 lần khi mạng retry).</li>
+                    </ul>
+
+                    <h3>2.4. <code>SagaInstance</code> — Hồ sơ theo dõi 1 phiên giao dịch trên State Diagram</h3>
+                    <p>File: <code>saga-orchestrator/.../model/SagaInstance.java</code></p>
+                    <p><code>SagaInstance</code> <strong>không lưu dữ liệu nghiệp vụ</strong> (như số dư ví hay tồn kho sản phẩm), mà là đối tượng đại diện cho <strong>1 đơn hàng đang di chuyển trên State Diagram</strong> do Orchestrator nắm giữ:</p>
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>public class SagaInstance {
+    private String orderId;             // Định danh phiên Saga
+    private String customerId;          // Context đầu vào để truyền cho các bước T_k, C_k
+    private String productId;
+    private int quantity;
+    private BigDecimal amount;
+
+    private OrderStatus status;         // Đang đứng ở NODE nào trên State Diagram?
+    private String failureReason;       // Lý do rẽ nhánh sang CANCELLED (nếu có)
+    private List&lt;SagaStepLog&gt; sagaLogs; // Lịch sử đi qua từng cạnh của State Diagram
+}</code></pre>
+                    </div>
+                    <div class="doc-callout">
+                        <strong>Tác dụng thực tế:</strong> Nhờ <code>SagaInstance</code>, cả Orchestrator lẫn giao diện Web Dashboard (cột Log bên trái) đều biết chính xác phiên giao dịch đang đứng ở Node nào (<code>status</code>) và đã đi qua những bước gọi API nào (<code>sagaLogs</code>).
+                    </div>
+
+                    <hr>
+
+                    <h2>Bước 3: Implement 3 Services Nghiệp vụ và các cặp <code>T<sub>k</sub> - C<sub>k</sub></code></h2>
+                    <p>Nguyên tắc cốt lõi trước khi viết Orchestrator: <strong>Mỗi Service nghiệp vụ phải tự quản lý Local Database của mình và cung cấp đủ cặp hàm Tiến (<code>T<sub>k</sub></code>) — Lùi (<code>C<sub>k</sub></code>) có tính Idempotent.</strong></p>
+
+                    <div class="doc-table-wrap">
+                        <table class="doc-table">
+                            <thead>
+                                <tr>
+                                    <th>Bước</th>
+                                    <th>Service</th>
+                                    <th>Hành động Tiến (T<sub>k</sub> - Forward)</th>
+                                    <th>Hành động Bù trừ (C<sub>k</sub> - Compensate)</th>
+                                    <th>Hành động Chốt (T<sub>4</sub> - Confirm)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>1</strong></td>
+                                    <td><strong>Order Service</strong><br>(<code>:8081</code>)</td>
+                                    <td><span class="doc-tag-fix">T1 — createOrder()</span><br><code>POST /api/order</code><br>Tạo đơn ở trạng thái khóa tạm <code>PENDING</code>.</td>
+                                    <td><span class="doc-tag-bug">C1 — cancelOrder()</span><br><code>POST /api/order/{id}/cancel</code><br>Đổi trạng thái đơn sang <code>CANCELLED</code> + lưu lý do lỗi.</td>
+                                    <td><strong>confirmOrder()</strong><br><code>POST /api/order/{id}/confirm</code><br>Chuyển đơn từ <code>PENDING</code> &rarr; <code>COMPLETED</code>.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>2</strong></td>
+                                    <td><strong>Inventory Service</strong><br>(<code>:8082</code>)</td>
+                                    <td><span class="doc-tag-fix">T2 — reserveStock()</span><br><code>POST /api/inventory/reserve</code><br>Kiểm tra trùng <code>orderId</code>, trừ <code>availableStock (-qty)</code> và cộng vào <code>reservedStock (+qty)</code> (<em>Semantic Lock</em>).</td>
+                                    <td><span class="doc-tag-bug">C2 — compensateReleaseStock()</span><br><code>POST /api/inventory/compensate</code><br>Trừ <code>reservedStock (-qty)</code> và cộng trả lại <code>availableStock (+qty)</code> (<em>Commutative Update</em>).</td>
+                                    <td><strong>confirmDeduction()</strong><br><code>POST /api/inventory/confirm</code><br>Xóa <code>reservedStock (-qty)</code> khi đơn đã thanh toán xong.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>3</strong></td>
+                                    <td><strong>Payment Service</strong><br>(<code>:8083</code>)</td>
+                                    <td><span class="doc-tag-fix">T3 — debitCustomer()</span><br><code>POST /api/payment/debit</code><br>Kiểm tra trùng <code>orderId</code>, kiểm tra số dư và trừ tiền ví <code>balance (-amount)</code>.</td>
+                                    <td><span class="doc-tag-bug">C3 — compensateRefund()</span><br><code>POST /api/payment/compensate</code><br>Hoàn lại đúng số tiền đã trừ <code>balance (+amount)</code>, đánh dấu <code>REFUNDED</code>.</td>
+                                    <td><em>(Không cần vì bước trừ tiền là Pivot Transaction)</em></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr>
+
+                    <h2>Bước 4: Implement Orchestrator và Nguyên lý chạy Saga Flow (Stack LIFO)</h2>
+                    <p>File: <code>saga-orchestrator/.../service/SagaOrchestratorService.java</code></p>
+                    <p>Sau khi 3 service đã có đủ các cặp API <code>(T<sub>k</sub>, C<sub>k</sub>)</code>, <code>SagaOrchestratorService</code> sẽ kết nối chúng lại trong hàm <code>runSagaFlow()</code> bằng một <strong>Stack (Ngăn xếp LIFO — Vào sau, Ra trước)</strong>:</p>
+
+                    <div class="doc-code-wrap">
+                        <button class="btn-copy-code" onclick="copyDocCode(this)">Copy</button>
+                        <pre><code>private record Compensation(String name, BooleanSupplier action) {}
+
+Deque&lt;Compensation&gt; compensations = new ArrayDeque&lt;&gt;();</code></pre>
+                    </div>
+
+                    <h3>Nguyên lý chạy Saga Flow (Chỉ <code>push(C<sub>k</sub>)</code> SAU KHI <code>T<sub>k</sub></code> thành công)</h3>
+                    <ul>
+                        <li><strong>Gọi <code>T<sub>k</sub></code> trước &rarr; Kiểm tra kết quả &rarr; Nếu <code>T<sub>k</sub></code> THÀNH CÔNG mới <code>push(C<sub>k</sub>)</code> vào Stack.</strong></li>
+                        <li>Nếu <code>T<sub>k</sub></code> thất bại ngay lúc gọi, bản thân bước <code>k</code> chưa làm thay đổi dữ liệu nên không cần chạy <code>C<sub>k</sub></code>, mà gọi ngay <code>abort()</code> để lấy từ <code>C<sub>k-1</sub></code> về <code>C<sub>1</sub></code> ra chạy.</li>
+                    </ul>
+
+                    <div class="doc-code-wrap">
+                        <pre><code>Khởi tạo: compensations = [ ] (Stack rỗng)
+
+[Step 1] Gọi T1 (Order: Tạo đơn PENDING)
+   ├─ Nếu T1 lỗi  ──&gt; Kết thúc ngay (Stack rỗng, chưa có gì cần rollback)
+   └─ Nếu T1 OK   ──&gt; Khởi tạo SagaInstance(status = PENDING)
+                      compensations.push(C1: Cancel Order)
+                      =&gt; Stack hiện tại: [ C1 ]
+
+[Step 2] Gọi T2 (Inventory: Giữ hàng vào reservedStock)
+   ├─ Nếu T2 lỗi  ──&gt; Gọi abort() ──&gt; pop() và chạy C1 (Cancel Order)
+   └─ Nếu T2 OK   ──&gt; Cập nhật SagaInstance(status = INVENTORY_RESERVED)
+                      compensations.push(C2: Release Stock)
+                      =&gt; Stack hiện tại: [ C2, C1 ]  (C2 nằm trên đỉnh Stack)
+
+[Step 3] Gọi T3 (Payment: Trừ tiền ví khách hàng)
+   ├─ Nếu T3 lỗi (VD: Ví không đủ số dư)
+   │    └─ Gọi abort() ──&gt; Vòng lặp while (!compensations.isEmpty()):
+   │          1. pop() đỉnh Stack ra C2 ──&gt; Gọi Inventory nhả hàng (+qty)
+   │          2. pop() tiếp ra C1       ──&gt; Gọi Order hủy đơn (CANCELLED)
+   │          3. Stack rỗng             ──&gt; Cập nhật SagaInstance(status = CANCELLED)
+   └─ Nếu T3 OK   ──&gt; compensations.push(C3: Refund Payment)
+                      =&gt; Stack hiện tại: [ C3, C2, C1 ]
+
+[Step 4] Gọi T4 (Confirm Inventory &amp; Confirm Order)
+   ├─ Nếu Confirm Order lỗi ──&gt; Gọi abort() ──&gt; pop() lần lượt: C3 (Hoàn tiền) -&gt; C2 (Nhả kho) -&gt; C1 (Hủy đơn)
+   └─ Nếu Confirm OK        ──&gt; Cập nhật SagaInstance(status = COMPLETED)
+                                Hoàn tất phiên SAGA!</code></pre>
+                    </div>
+
+                    <div class="doc-demo-bar">
+                        <span style="font-weight: 700; color: #ddd6fe; margin-right: 4px;">🎬 Kiểm chứng trực tiếp luồng Stack LIFO &amp; State Diagram:</span>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case1')">Chạy Case 1 (T3 lỗi &rarr; pop C2, C1)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case2')">Chạy Case 2 (Xem Semantic Lock)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'happy')">Chạy Happy Path (T1 &rarr; T4 COMPLETED)</button>
+                    </div>
+                `
+            }
+        ];
+
+        function renderDocsView() {
+            const navList = document.getElementById('docs-nav-list');
+            const idx = DOCS_ITEMS.findIndex(d => d.id === activeDocId);
+            const safeIdx = idx >= 0 ? idx : 0;
+            const currentDoc = DOCS_ITEMS[safeIdx];
+            activeDocId = currentDoc.id;
+
+            navList.innerHTML = DOCS_ITEMS.map(d => `
+                <button class="doc-nav-item${d.id === activeDocId ? ' active' : ''}" onclick="selectDoc('${d.id}')">
+                    <span class="doc-nav-num">${d.num}</span>
+                    <span>
+                        <span class="doc-nav-title">${d.title}</span>
+                        <span class="doc-nav-sub">${d.sub}</span>
+                    </span>
+                </button>
+            `).join('');
+
+            document.getElementById('docs-file-path').textContent = '📄 ' + currentDoc.file;
+            document.getElementById('docs-step-counter').textContent = `${safeIdx + 1} / ${DOCS_ITEMS.length}`;
+
+            const article = document.getElementById('docs-article');
+            article.style.setProperty('--docs-font-size', docsFontSize + 'px');
+            article.innerHTML = currentDoc.html;
+
+            const prevDoc = safeIdx > 0 ? DOCS_ITEMS[safeIdx - 1] : null;
+            const nextDoc = safeIdx < DOCS_ITEMS.length - 1 ? DOCS_ITEMS[safeIdx + 1] : null;
+
+            const prevTop = document.getElementById('btn-doc-prev-top');
+            const nextTop = document.getElementById('btn-doc-next-top');
+            const prevBot = document.getElementById('btn-doc-prev-bottom');
+            const nextBot = document.getElementById('btn-doc-next-bottom');
+
+            prevTop.disabled = !prevDoc;
+            nextTop.disabled = !nextDoc;
+            prevBot.disabled = !prevDoc;
+            nextBot.disabled = !nextDoc;
+
+            prevBot.textContent = prevDoc ? `← ${prevDoc.num}. ${prevDoc.title}` : '← Đầu mục lục';
+            nextBot.textContent = nextDoc ? `${nextDoc.num}. ${nextDoc.title} →` : 'Hết tài liệu';
+        }
+
+        function selectDoc(docId) {
+            activeDocId = docId;
+            renderDocsView();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function stepDoc(delta) {
+            const idx = DOCS_ITEMS.findIndex(d => d.id === activeDocId);
+            const nextIdx = idx + delta;
+            if (nextIdx >= 0 && nextIdx < DOCS_ITEMS.length) {
+                selectDoc(DOCS_ITEMS[nextIdx].id);
+            }
+        }
+
+        function adjustDocsFont(delta) {
+            if (delta === 0) docsFontSize = 15;
+            else docsFontSize = Math.min(21, Math.max(13, docsFontSize + delta * 2));
+            const article = document.getElementById('docs-article');
+            if (article) article.style.setProperty('--docs-font-size', docsFontSize + 'px');
+        }
+
+        async function copyDocCode(btn) {
+            const codeEl = btn.parentElement ? btn.parentElement.querySelector('pre code') : null;
+            if (!codeEl) return;
+            try {
+                await navigator.clipboard.writeText(codeEl.textContent);
+                const old = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = old; }, 1400);
+            } catch (_) {
+                btn.textContent = 'Copy manually';
+            }
+        }
+
+        function jumpAndRunCase(mode, caseId) {
+            switchMode(mode);
+            runTestCase(caseId);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         // Init UI
         switchMode('before');
         fetchSystemState();
-        setInterval(() => { if (!isRunning) fetchSystemState(); }, 4000);
+        setInterval(() => { if (!isRunning && currentMode !== 'docs') fetchSystemState(); }, 4000);
     </script>
 </body>
 </html>

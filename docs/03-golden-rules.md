@@ -6,7 +6,7 @@ Bám sát tài liệu chuẩn ở [01-problem-context.md](01-problem-context.md)
 |---|---|---|---|
 | **Case 1** | **BUG-1: Partial Commit**<br>Payment lỗi nhưng `Order` & `Inventory` đã commit trước đó không tự hoàn tác $\rightarrow$ kho mất hàng, đơn treo. | **Compensating Transaction (LIFO) + Commutative Updates**<br>Orchestrator chạy bù trừ ngược `Release Inventory (+qty)` $\rightarrow$ `Cancel Order`. | `WithoutSagaProblemsTest`, `Rule1_AtomicityAndCompensationTest` |
 | **Case 2** | **BUG-2: Dirty Read / Mất Isolation**<br>Gọi `POST /api/inventory/deduct` trừ thẳng vào `availableStock` (`reservedStock = 0`). Bên ngoài nhìn vào thấy kho bị trừ đứt dù đơn chưa thanh toán. | **Semantic Lock (`PENDING` / `RESERVED`)**<br>Gọi `POST /api/inventory/reserve` giữ tạm vào `reservedStock`, `Order = PENDING`. Chỉ bước cuối mới `Confirm` hoặc `Release`. | `WithoutSagaProblemsTest`, `Rule2_SemanticLockIsolationTest` |
-| **Case 3** | **BUG-3: Conflicting / Duplicate Updates**<br>Không ghi Version/Operation Log theo `orderId` $\rightarrow$ mạng timeout gửi trùng lệnh làm trừ kho & ví **2 lần**. | **Version Files / Operation Log (Idempotency)**<br>Lưu trạng thái từng `orderId` (`RESERVED`, `CONFIRMED`, `COMPENSATED`, `DEBITED`, `REFUNDED`). Gọi $N$ lần vẫn chỉ đổi dữ liệu đúng 1 lần. | `Rule3_InventoryIdempotencyTest`, `Rule3_PaymentIdempotencyTest` |
+| **Case 3** | **BUG-3: Conflicting / Duplicate Updates**<br>Không ghi Version/Operation Log theo `orderId` $\rightarrow$ mạng timeout gửi trùng lệnh làm trừ kho & ví **2 lần**. | **Version File / Operation Log *(Áp dụng mở rộng: Idempotency)***<br>Định nghĩa gốc ghi nhật ký thao tác để sắp xếp lại đúng thứ tự; trong Demo mở rộng lưu trạng thái từng `orderId` (`RESERVED`, `CONFIRMED`, `COMPENSATED`, `DEBITED`, `REFUNDED`) để chống trùng lệnh khi retry. Gọi $N$ lần vẫn chỉ đổi dữ liệu đúng 1 lần. | `Rule3_InventoryIdempotencyTest`, `Rule3_PaymentIdempotencyTest` |
 
 ---
 
@@ -20,9 +20,10 @@ Bám sát tài liệu chuẩn ở [01-problem-context.md](01-problem-context.md)
 - **Trước SAGA (`POST /api/orders/without-saga?mode=no_semantic_lock`):** Gọi `POST /api/inventory/deduct` trừ thẳng `availableStock` (`5 -> 4, reserved = 0`). Không đánh dấu trạng thái giữ tạm cho giao dịch đang chạy.
 - **Sau SAGA (`POST /api/orders?delayBeforePaymentMs=1400`):** Gọi `POST /api/inventory/reserve` chuyển sang `available = 4, reserved = 1` và `Order = PENDING` (**Semantic Lock**). Nếu bước sau thành công mới xóa `reservedStock` (Confirm), nếu lỗi thì trả lại `availableStock`.
 
-### Case 3 — Duplicate Updates vs Operation Log (Idempotency)
+### Case 3 — Duplicate Updates vs Operation Log (Áp dụng mở rộng từ Version File)
 - **Trước SAGA (`POST /api/orders/without-saga?mode=duplicate_request`):** Gửi lặp lại `reserve` và `debit` 2 lần cho cùng `orderId` $\rightarrow$ kho mất 2 máy, ví bị trừ gấp đôi (`$5,000 -> $1,000`).
 - **Sau SAGA (`POST /api/orders/duplicate-check`):** `InventoryService` kiểm tra `reservationStates`, `PaymentService` kiểm tra `paymentStates` theo `orderId` $\rightarrow$ lần gọi thứ 2 trả về `Idempotent OK`, dữ liệu chỉ thay đổi đúng 1 lần (`$5,000 -> $3,000`, kho trừ 1).
+- **Lưu ý phân biệt lý thuyết vs Demo:** *Version File* theo định nghĩa gốc của Saga dùng để ghi lại các thao tác trên bản ghi nhằm sắp xếp lại đúng thứ tự thực thi (chống xung đột thứ tự); Demo mở rộng áp dụng Operation Log theo `orderId` để đảm bảo **Idempotency** khi mạng retry.
 
 ---
 
