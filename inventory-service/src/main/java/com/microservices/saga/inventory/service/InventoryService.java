@@ -43,10 +43,25 @@ public class InventoryService {
         reservationStates.clear();
         remainingSimulatedCompensateFailures.set(0);
 
-        inventoryMap.put("PROD-001", new ProductInventory("PROD-001", "MacBook Pro M3", 10, 0));
-        inventoryMap.put("PROD-002", new ProductInventory("PROD-002", "iPhone 15 Pro", 5, 0));
-        inventoryMap.put("PROD-OUT-OF-STOCK", new ProductInventory("PROD-OUT-OF-STOCK", "PlayStation 5 Pro (Out of stock demo)", 0, 0));
+        inventoryMap.put("PROD-001", new ProductInventory("PROD-001", "MacBook Pro M3", 10, 0, new java.math.BigDecimal("2000.00")));
+        inventoryMap.put("PROD-002", new ProductInventory("PROD-002", "iPhone 15 Pro", 5, 0, new java.math.BigDecimal("1000.00")));
+        inventoryMap.put("PROD-OUT-OF-STOCK", new ProductInventory("PROD-OUT-OF-STOCK", "PlayStation 5 Pro (Out of stock demo)", 0, 0, new java.math.BigDecimal("700.00")));
         log.info("[INVENTORY] Initial stock seeded: {}", inventoryMap.keySet());
+    }
+
+    /**
+     * Cap nhat gia san pham (dung de mo phong giao dich khac sua gia chen ngang -> gay Fuzzy Read).
+     */
+    public synchronized InventoryResponse updateProductPrice(String productId, java.math.BigDecimal newPrice) {
+        ProductInventory item = inventoryMap.get(productId);
+        if (item == null) {
+            return new InventoryResponse(null, productId, 0, false, "Product not found: " + productId);
+        }
+        java.math.BigDecimal oldPrice = item.getPrice();
+        item.setPrice(newPrice);
+        log.warn("[INVENTORY PRICE UPDATE] Product {} price changed from ${} to ${}", productId, oldPrice, newPrice);
+        return new InventoryResponse(null, productId, item.getAvailableStock(), true,
+                "Price updated from $" + oldPrice + " to $" + newPrice, newPrice);
     }
 
     public void simulateCompensateFailures(int failureCount) {
@@ -99,7 +114,7 @@ public class InventoryService {
         log.info("[SAGA FORWARD - INVENTORY] SUCCESS - Reserved {} of {}. Available: {}, Reserved: {}",
                 quantity, productId, item.getAvailableStock(), item.getReservedStock());
 
-        return new InventoryResponse(orderId, productId, quantity, true, "Inventory reserved successfully");
+        return new InventoryResponse(orderId, productId, quantity, true, "Inventory reserved successfully", item.getPrice());
     }
 
     /**

@@ -52,4 +52,18 @@ class WithoutSagaProblemsTest {
         assertEquals(4, fake.availableStock);
         assertEquals(0, fake.reservedStock, "BUG-2: No reservedStock lock was created");
     }
+
+    @Test
+    @DisplayName("BUG-4 (Fuzzy / Nonrepeatable Read): Price changes mid-saga ($1000->$1500) -> Order records $1000 (Read #1) but Wallet debits $1500 (Read #2)")
+    void bug4_fuzzyReadCausesInconsistentOrderAndPayment() {
+        orchestrator.executeWithoutSaga(
+                new OrderRequest("CUST-RICH", "PROD-002", 1, new BigDecimal("1000.00")),
+                "fuzzy_read", 0);
+
+        assertEquals(new BigDecimal("1000.00"), fake.orderAmount, "Read #1 at Order creation recorded $1000.00");
+        assertEquals(new BigDecimal("1500.00"), fake.productPrice, "Concurrent transaction changed price to $1500.00");
+        assertEquals(new BigDecimal("3500.00"), fake.walletBalance,
+                "BUG-4 (Fuzzy Read): Wallet was debited $1500.00 (Read #2) instead of $1000.00 (Read #1)!");
+        assertEquals(OrderStatus.COMPLETED, fake.orderStatus);
+    }
 }

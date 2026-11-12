@@ -69,6 +69,14 @@ public class InventoryController {
         return item == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(item);
     }
 
+    @PostMapping("/{productId}/price")
+    @Operation(summary = "Demo helper: update product unit price mid-flight to trigger or test Fuzzy Read")
+    public ResponseEntity<InventoryResponse> updatePrice(
+            @PathVariable String productId,
+            @RequestParam java.math.BigDecimal newPrice) {
+        return ResponseEntity.ok(inventoryService.updateProductPrice(productId, newPrice));
+    }
+
     @PostMapping("/reset")
     @Operation(summary = "Reset inventory to default values for demo")
     public ResponseEntity<String> reset() {

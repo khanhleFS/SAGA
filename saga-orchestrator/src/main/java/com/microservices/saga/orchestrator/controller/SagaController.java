@@ -41,6 +41,12 @@ public class SagaController {
         return ResponseEntity.ok(sagaService.executeSagaDuplicateCheck(request, delayBeforePaymentMs));
     }
 
+    @PostMapping("/orders/fuzzy-read-check")
+    @Operation(summary = "Run SAGA with concurrent price change mid-flight to prove Countermeasure 4: Reread Value(s) prevents Fuzzy Read")
+    public ResponseEntity<OrderResponse> createOrderFuzzyReadCheck(@RequestBody OrderRequest request) {
+        return ResponseEntity.ok(sagaService.executeSagaFuzzyReadCheck(request));
+    }
+
     @PostMapping("/orders/without-saga")
     @Operation(summary = "Run Naive flow WITHOUT SAGA to reproduce BUG-1..BUG-5")
     public ResponseEntity<OrderResponse> createOrderWithoutSaga(

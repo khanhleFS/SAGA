@@ -83,6 +83,86 @@ public class SagaOrchestratorService {
         return runSagaFlow(request, delayBeforePaymentMs, true);
     }
 
+    /**
+     * Kiem chung Countermeasure cho BUG-4 (Fuzzy / Nonrepeatable Read):
+     * Su dung Reread Value(s) (Optimistic Offline Lock) truoc khi tru tien/chot don.
+     * Neu phat hien gia san pham da bi giao dich khac thay doi giua chung ($1000 -> $1500),
+     * lập tức chặn thanh toán lệch giá và chạy LIFO Compensation (nhả kho -> hủy đơn).
+     */
+    public OrderResponse executeSagaFuzzyReadCheck(OrderRequest request) {
+        java.math.BigDecimal bumpedPrice = request.getAmount().add(new java.math.BigDecimal("500.00"));
+        return executeSagaFuzzyReadCheck(request, bumpedPrice);
+    }
+
+    public OrderResponse executeSagaFuzzyReadCheck(OrderRequest request, java.math.BigDecimal concurrentNewPrice) {
+        log.info("================================================================================");
+        log.info("[SAGA FUZZY-READ CHECK] Customer: {}, Product: {}, Initial Amount: ${}, Concurrent New Price: ${}",
+                request.getCustomerId(), request.getProductId(), request.getAmount(), concurrentNewPrice);
+
+        Deque<Compensation> compensations = new ArrayDeque<>();
+
+        // Read #1 (Snapshot gia ban dau tai thoi diem bat dau Saga)
+        java.math.BigDecimal snapshotPrice = callGetProductPrice(request.getProductId(), request.getAmount());
+
+        // STEP 1: Order Service - tao don PENDING voi gia snapshot ban dau
+        OrderResponse created = callCreateOrder(request);
+        if (created == null || created.getOrderId() == null) {
+            SagaInstance failed = newSaga("ORD-FAILED-" + System.currentTimeMillis(), request);
+            failed.setStatus(OrderStatus.CANCELLED);
+            failed.setFailureReason("Order Service unavailable");
+            return buildResponse(failed, "SAGA Failed at Step 1: Order Service unavailable");
+        }
+
+        String orderId = created.getOrderId();
+        SagaInstance saga = newSaga(orderId, request);
+        saga.addSagaLog(new SagaStepLog("saga-orchestrator :8080", SagaStepStatus.SUCCESS,
+                "📖 [Read #1 Snapshot] GET /api/inventory/" + request.getProductId() + " -> snapshotPrice=$" + snapshotPrice));
+        saga.addSagaLog(new SagaStepLog("order-service :8081", SagaStepStatus.SUCCESS,
+                "POST /api/order -> 200 OK (orderId=" + orderId + ", status=PENDING, lockedAmount=$" + request.getAmount() + ")"));
+        compensations.push(new Compensation("order-service :8081", () -> callCancelOrder(orderId, "SAGA compensation (Fuzzy Read detected)")));
+
+        // STEP 2: Inventory Service - giu hang
+        InventoryResponse inv = callReserveInventory(orderId, request.getProductId(), request.getQuantity(), false, false);
+        if (inv == null || !inv.isSuccess()) {
+            String reason = (inv != null) ? inv.getMessage() : "Inventory Service unavailable";
+            saga.addSagaLog(new SagaStepLog("inventory-service :8082", SagaStepStatus.FAILED,
+                    "POST /api/inventory/reserve -> FAILED (" + reason + ")"));
+            return abort(saga, compensations, "Inventory failed: " + reason, maxCompensationRetries);
+        }
+        saga.setStatus(OrderStatus.INVENTORY_RESERVED);
+        saga.addSagaLog(new SagaStepLog("inventory-service :8082", SagaStepStatus.SUCCESS,
+                "POST /api/inventory/reserve -> 200 OK (" + inv.getMessage() + ")"));
+        compensations.push(new Compensation("inventory-service :8082",
+                () -> callCompensateInventory(orderId, request.getProductId(), request.getQuantity())));
+
+        // GIAO DICH KHAC CHEN NGANG: Cap nhat gia san pham khi Saga A dang chay do
+        callUpdateProductPrice(request.getProductId(), concurrentNewPrice);
+        saga.addSagaLog(new SagaStepLog("concurrent-admin :8082", SagaStepStatus.PENDING,
+                "⚡ [Giao dịch khác chen ngang] POST /api/inventory/" + request.getProductId() + "/price -> Đổi giá $" + snapshotPrice + " ➔ $" + concurrentNewPrice));
+
+        // STEP 3: Countermeasure - REREAD VALUE(S) truoc khi ghi de / thanh toan
+        java.math.BigDecimal rereadPrice = callGetProductPrice(request.getProductId(), concurrentNewPrice);
+        if (rereadPrice.compareTo(snapshotPrice) != 0) {
+            saga.addSagaLog(new SagaStepLog("saga-orchestrator :8080", SagaStepStatus.FAILED,
+                    "🛡️ [Reread Value / Optimistic Check] GET /api/inventory/" + request.getProductId()
+                            + " -> Phát hiện Fuzzy Read! Giá đọc lần 1 ($" + snapshotPrice + ") != Giá đọc lần 2 ($" + rereadPrice + "). Chặn trừ tiền sai & kích hoạt bù trừ!"));
+            return abort(saga, compensations,
+                    "Fuzzy Read detected by Reread Value (price changed $" + snapshotPrice + " -> $" + rereadPrice + ")",
+                    maxCompensationRetries);
+        }
+
+        // Neu gia khong doi thi tiep tuc thanh toan bình thuong
+        PaymentResponse pay = callProcessPayment(orderId, request.getCustomerId(), request.getAmount(), false);
+        if (pay == null || !pay.isSuccess()) {
+            String reason = (pay != null) ? pay.getMessage() : "Payment Service unavailable";
+            return abort(saga, compensations, "Payment failed: " + reason, maxCompensationRetries);
+        }
+        callConfirmInventory(orderId, request.getProductId(), request.getQuantity());
+        callConfirmOrder(orderId);
+        saga.setStatus(OrderStatus.COMPLETED);
+        return buildResponse(saga, "Order completed");
+    }
+
     private OrderResponse runSagaFlow(OrderRequest request, long delayBeforePaymentMs, boolean simulateDuplicateCalls) {
         log.info("================================================================================");
         log.info("[SAGA START] Customer: {}, Product: {}, Qty: {}, Amount: ${}",
@@ -186,6 +266,9 @@ public class SagaOrchestratorService {
         if ("duplicate_request".equals(normalizedMode)) {
             return runNaiveDuplicate(request);
         }
+        if ("fuzzy_read".equals(normalizedMode)) {
+            return runNaiveFuzzyRead(request);
+        }
 
         boolean combinedNaive = "naive_full_demo".equals(normalizedMode);
         boolean directDeduct = "no_semantic_lock".equals(normalizedMode) || combinedNaive;
@@ -274,6 +357,53 @@ public class SagaOrchestratorService {
         return buildResponse(saga, saga.getFailureReason());
     }
 
+    /**
+     * Tai hien BUG-4 (Fuzzy / Nonrepeatable Read) khi khong co Reread Value check:
+     * Buoc 1 doc gia $1000 tao Order, giua chung giao dich khac sua gia len $1500,
+     * Buoc 3 doc lai gia moi ($1500) va tru vi khach $1500 -> Order ghi $1000 nhung Vi mat $1500!
+     */
+    private OrderResponse runNaiveFuzzyRead(OrderRequest request) {
+        java.math.BigDecimal initialPrice = callGetProductPrice(request.getProductId(), request.getAmount());
+        java.math.BigDecimal bumpedPrice = initialPrice.add(new java.math.BigDecimal("500.00"));
+
+        OrderResponse created = callCreateOrder(request);
+        String orderId = created != null ? created.getOrderId() : "NAIVE-FUZZY-" + System.currentTimeMillis();
+        SagaInstance saga = newSaga(orderId, request);
+        saga.addSagaLog(new SagaStepLog("saga-orchestrator :8080", SagaStepStatus.SUCCESS,
+                "📖 [Read #1] GET /api/inventory/" + request.getProductId() + " -> price=$" + initialPrice));
+        saga.addSagaLog(new SagaStepLog("order-service :8081", SagaStepStatus.SUCCESS,
+                "POST /api/order -> 200 OK (orderId=" + orderId + ", Order.amount=$" + request.getAmount() + " theo Read #1)"));
+
+        InventoryResponse inv = callReserveInventory(orderId, request.getProductId(), request.getQuantity(), false, false);
+        saga.addSagaLog(new SagaStepLog("inventory-service :8082", SagaStepStatus.SUCCESS,
+                "POST /api/inventory/reserve -> 200 OK (" + (inv != null ? inv.getMessage() : "Reserved") + ")"));
+
+        // Giao dich khac chen ngang cap nhat gia san pham tu $1000 -> $1500
+        callUpdateProductPrice(request.getProductId(), bumpedPrice);
+        saga.addSagaLog(new SagaStepLog("concurrent-admin :8082", SagaStepStatus.PENDING,
+                "⚡ [Giao dịch khác chen ngang] POST /api/inventory/" + request.getProductId() + "/price -> Đổi giá $" + initialPrice + " ➔ $" + bumpedPrice));
+
+        // Buoc 3 doc lai gia san pham (Read #2) nhung KHONG doi chieu voi Read #1 -> dinh Fuzzy Read!
+        java.math.BigDecimal secondReadPrice = callGetProductPrice(request.getProductId(), bumpedPrice);
+        java.math.BigDecimal secondReadAmount = secondReadPrice.multiply(java.math.BigDecimal.valueOf(request.getQuantity()));
+        saga.addSagaLog(new SagaStepLog("saga-orchestrator :8080", SagaStepStatus.FAILED,
+                "🚨 [FUZZY READ! Read #2 != Read #1] GET /api/inventory/" + request.getProductId()
+                        + " -> Đọc ra giá mới $" + secondReadPrice + " (khác với $" + initialPrice + " ở Bước 1) nhưng không kiểm tra đối chiếu!"));
+
+        PaymentResponse pay = callProcessPayment(orderId, request.getCustomerId(), secondReadAmount, false);
+        saga.addSagaLog(new SagaStepLog("payment-service :8083", SagaStepStatus.FAILED,
+                "POST /api/payment/debit -> 🚨 Trừ ví theo Read #2 ($" + secondReadAmount + ") trong khi Order lưu Read #1 ($" + request.getAmount() + ")! "
+                        + (pay != null ? pay.getMessage() : "")));
+
+        callConfirmInventory(orderId, request.getProductId(), request.getQuantity());
+        callConfirmOrder(orderId);
+        saga.setStatus(OrderStatus.COMPLETED);
+        saga.addSagaLog(new SagaStepLog("order-service :8081", SagaStepStatus.SUCCESS,
+                "POST /api/order/" + orderId + "/confirm -> 200 OK (status=COMPLETED — Đơn ghi $" + request.getAmount() + " nhưng Ví bị trừ $" + secondReadAmount + "!)"));
+        saga.setFailureReason("Fuzzy Read: Order recorded $" + request.getAmount() + " (Read #1) but Wallet debited $" + secondReadAmount + " (Read #2)");
+        return buildResponse(saga, saga.getFailureReason());
+    }
+
     // =========================================================================
     // COMPENSATION STACK + RETRY
     // =========================================================================
@@ -353,6 +483,30 @@ public class SagaOrchestratorService {
             restTemplate.postForObject(inventoryUrl + "/api/inventory/demo/compensate-failures?count=" + count, null, String.class);
         } catch (Exception e) {
             log.warn("Could not arm inventory failures: {}", e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private java.math.BigDecimal callGetProductPrice(String productId, java.math.BigDecimal fallback) {
+        try {
+            Map<String, Object> map = restTemplate.getForObject(inventoryUrl + "/api/inventory/" + productId, Map.class);
+            if (map != null && map.get("price") != null) {
+                return new java.math.BigDecimal(String.valueOf(map.get("price")));
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch product price for {}: {}", productId, e.getMessage());
+        }
+        return fallback;
+    }
+
+    private void callUpdateProductPrice(String productId, java.math.BigDecimal newPrice) {
+        try {
+            restTemplate.postForObject(
+                    inventoryUrl + "/api/inventory/" + productId + "/price?newPrice=" + newPrice,
+                    null,
+                    InventoryResponse.class);
+        } catch (Exception e) {
+            log.warn("Could not update product price for {}: {}", productId, e.getMessage());
         }
     }
 

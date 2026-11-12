@@ -17,12 +17,30 @@ class FakeSagaRestTemplate extends RestTemplate {
     final List<String> calledUrls = new ArrayList<>();
     int availableStock = 5;
     int reservedStock = 0;
+    BigDecimal productPrice = new BigDecimal("1000.00");
     BigDecimal walletBalance = new BigDecimal("5000.00");
+    BigDecimal orderAmount = null;
     OrderStatus orderStatus = null;
 
     boolean paymentShouldSucceed = true;
     boolean inventoryShouldSucceed = true;
     int compensateFailuresRemaining = 0;
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getForObject(String url, Class<T> responseType, Object... uriVariables)
+            throws RestClientException {
+        calledUrls.add(url);
+        if (url.startsWith(INV + "/api/inventory/")) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("productId", "PROD-002");
+            map.put("availableStock", availableStock);
+            map.put("reservedStock", reservedStock);
+            map.put("price", productPrice);
+            return (T) map;
+        }
+        return null;
+    }
 
     @Override
     @SuppressWarnings("unchecked")
@@ -32,7 +50,14 @@ class FakeSagaRestTemplate extends RestTemplate {
 
         if (url.equals(ORDER + "/api/order")) {
             orderStatus = OrderStatus.PENDING;
-            return (T) new OrderResponse("ORD-1", "C", "P", 1, BigDecimal.TEN, OrderStatus.PENDING, "created");
+            OrderRequest or = (OrderRequest) request;
+            orderAmount = or != null ? or.getAmount() : BigDecimal.TEN;
+            return (T) new OrderResponse("ORD-1", "C", "P", 1, orderAmount, OrderStatus.PENDING, "created");
+        }
+        if (url.startsWith(INV + "/api/inventory/") && url.contains("/price?newPrice=")) {
+            String priceStr = url.substring(url.indexOf("newPrice=") + "newPrice=".length());
+            productPrice = new BigDecimal(priceStr);
+            return (T) new InventoryResponse(null, "PROD-002", availableStock, true, "Price updated to $" + productPrice, productPrice);
         }
         if (url.startsWith(ORDER) && url.endsWith("/confirm")) {
             orderStatus = OrderStatus.COMPLETED;

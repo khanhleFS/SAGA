@@ -7,17 +7,19 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0b0f19;
-            --bg-secondary: #111827;
-            --bg-card: #1f2937;
+            --bg-primary: #070b14;
+            --bg-secondary: rgba(17, 24, 39, 0.86);
+            --bg-card: rgba(30, 41, 59, 0.78);
             --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --accent-yellow: #f59e0b;
             --accent-purple: #8b5cf6;
-            --text-main: #f9fafb;
-            --text-muted: #9ca3af;
-            --border-color: #374151;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(148, 163, 184, 0.16);
+            --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.55);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,42 +27,89 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-primary);
+            background-image:
+                radial-gradient(circle at 12% 8%, rgba(59, 130, 246, 0.14), transparent 36%),
+                radial-gradient(circle at 88% 10%, rgba(139, 92, 246, 0.14), transparent 36%),
+                radial-gradient(circle at 50% 95%, rgba(16, 185, 129, 0.08), transparent 40%);
+            background-attachment: fixed;
             color: var(--text-main);
             line-height: 1.5;
-            padding: 20px 24px;
+            padding: 22px 28px 36px;
+            max-width: 1600px;
+            margin: 0 auto;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 18px 22px;
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.92), rgba(30, 41, 59, 0.75));
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(14px);
             margin-bottom: 18px;
-            gap: 12px;
+            gap: 16px;
             flex-wrap: wrap;
         }
 
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .header-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #93c5fd;
+        }
+
         .header h1 {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 800;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 0%, #93c5fd 55%, #c4b5fd 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .header p { color: var(--text-muted); font-size: 13px; }
 
+        .service-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .srv-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
+        }
+
         .badge-live {
-            background-color: rgba(16, 185, 129, 0.18);
-            color: var(--accent-green);
-            padding: 6px 12px;
+            background-color: rgba(16, 185, 129, 0.16);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #34d399;
+            padding: 7px 14px;
             border-radius: 9999px;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 7px;
         }
 
         .badge-live::before {
@@ -69,12 +118,13 @@
             height: 8px;
             background-color: var(--accent-green);
             border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
             animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(1.2); }
+            50% { opacity: 0.4; transform: scale(1.25); }
         }
 
         /* Top Mode Tabs: BEFORE vs AFTER SAGA vs DOCS */
@@ -84,43 +134,53 @@
             gap: 12px;
             background: var(--bg-secondary);
             padding: 8px;
-            border-radius: 14px;
+            border-radius: 16px;
             border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(12px);
             margin-bottom: 18px;
         }
 
         .mode-tab {
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: 2px solid transparent;
-            background: transparent;
+            padding: 13px 16px;
+            border-radius: 12px;
+            border: 1.5px solid transparent;
+            background: rgba(255, 255, 255, 0.015);
             color: var(--text-muted);
             cursor: pointer;
             text-align: left;
-            transition: all 0.2s ease;
+            transition: all 0.22s ease;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
         }
 
-        .mode-tab:hover { background: rgba(255, 255, 255, 0.03); color: var(--text-main); }
+        .mode-tab:hover { background: rgba(255, 255, 255, 0.045); color: var(--text-main); transform: translateY(-1px); }
 
-        .mode-tab.active-before,
+        .mode-tab.active-before {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.16), rgba(245, 158, 11, 0.08));
+            border-color: rgba(239, 68, 68, 0.65);
+            box-shadow: 0 0 22px rgba(239, 68, 68, 0.18);
+            color: var(--text-main);
+        }
+
         .mode-tab.active-after {
-            background: rgba(59, 130, 246, 0.12);
-            border-color: var(--accent-blue);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(59, 130, 246, 0.1));
+            border-color: rgba(16, 185, 129, 0.65);
+            box-shadow: 0 0 22px rgba(16, 185, 129, 0.18);
             color: var(--text-main);
         }
 
         .mode-tab.active-docs {
-            background: rgba(139, 92, 246, 0.14);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.1));
             border-color: var(--accent-purple);
+            box-shadow: 0 0 22px rgba(139, 92, 246, 0.2);
             color: var(--text-main);
         }
 
-        .tab-title { font-size: 14.5px; font-weight: 700; display: block; }
-        .tab-sub { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
+        .tab-title { font-size: 14.5px; font-weight: 800; display: block; }
+        .tab-sub { font-size: 12px; color: var(--text-muted); display: block; margin-top: 3px; }
         .tab-pill {
             font-size: 11px;
             font-weight: 700;
@@ -130,23 +190,28 @@
             background: rgba(148, 163, 184, 0.14);
             color: #cbd5e1;
         }
-        .mode-tab.active-before .tab-pill,
+        .mode-tab.active-before .tab-pill {
+            background: rgba(239, 68, 68, 0.24);
+            color: #fecaca;
+        }
         .mode-tab.active-after .tab-pill {
-            background: rgba(59, 130, 246, 0.22);
-            color: #93c5fd;
+            background: rgba(16, 185, 129, 0.24);
+            color: #a7f3d0;
         }
         .mode-tab.active-docs .tab-pill {
             background: rgba(139, 92, 246, 0.28);
             color: #ddd6fe;
         }
 
-        /* Architecture Flow Diagram (3 Nodes: T1 -> T3) */
+        /* Architecture Flow Diagram (4 Nodes: T1 -> T2 -> T3 -> T4) */
         .diagram-section {
-            background-color: var(--bg-secondary);
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 16px 20px;
             margin-bottom: 18px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(12px);
         }
 
         .diagram-title {
@@ -155,7 +220,7 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--accent-blue);
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -165,92 +230,109 @@
 
         .workflow-nodes {
             display: grid;
-            grid-template-columns: 1fr auto 1fr auto 1fr;
+            grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
             align-items: center;
             gap: 10px;
         }
 
         .node-card {
-            background-color: var(--bg-card);
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            padding: 12px;
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 14px;
             text-align: center;
             transition: all 0.25s ease;
+            position: relative;
         }
 
-        .node-card.active { border-color: var(--accent-blue); box-shadow: 0 0 14px rgba(59, 130, 246, 0.35); }
-        .node-card.success { border-color: var(--accent-green); box-shadow: 0 0 14px rgba(16, 185, 129, 0.35); }
-        .node-card.error { border-color: var(--accent-red); box-shadow: 0 0 14px rgba(239, 68, 68, 0.45); }
-        .node-card.compensating { border-color: var(--accent-yellow); box-shadow: 0 0 14px rgba(245, 158, 11, 0.4); }
+        .node-card.active { border-color: var(--accent-blue); box-shadow: 0 0 18px rgba(59, 130, 246, 0.35); transform: translateY(-2px); }
+        .node-card.success { border-color: var(--accent-green); box-shadow: 0 0 18px rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); }
+        .node-card.error { border-color: var(--accent-red); box-shadow: 0 0 20px rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.09); }
+        .node-card.compensating { border-color: var(--accent-yellow); box-shadow: 0 0 18px rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08); }
 
-        .node-icon { font-size: 20px; margin-bottom: 4px; }
-        .node-name { font-weight: 700; font-size: 13px; }
-        .node-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .node-icon { font-size: 22px; margin-bottom: 4px; }
+        .node-name { font-weight: 800; font-size: 13px; }
+        .node-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
         .arrow { font-size: 18px; color: var(--text-muted); font-weight: bold; text-align: center; }
 
-        /* 4 Bug / Golden Rule Test Case Buttons + Happy Path */
+        /* 5 Scenario Cards (4 Anomalies/Countermeasures + Happy Path) */
         .scenarios-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 18px;
         }
 
         .scenario-btn {
-            background-color: var(--bg-secondary);
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            border-left: 3px solid #475569;
-            border-radius: 10px;
-            padding: 13px 14px;
+            border-top: 3px solid #475569;
+            border-radius: 14px;
+            padding: 14px 15px;
             text-align: left;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.22s ease;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 7px;
             color: inherit;
+            box-shadow: var(--shadow-card);
+            position: relative;
         }
 
-        .scenario-btn:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--accent-blue); }
-        .scenario-btn.selected { border-color: var(--accent-blue); border-left-color: var(--accent-blue); background: rgba(59, 130, 246, 0.08); }
+        .scenario-btn.card-before { border-top-color: rgba(239, 68, 68, 0.7); }
+        .scenario-btn.card-after { border-top-color: rgba(16, 185, 129, 0.75); }
+        .scenario-btn.card-happy { border-top-color: rgba(59, 130, 246, 0.8); }
+
+        .scenario-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            border-color: rgba(96, 165, 250, 0.65);
+            box-shadow: 0 14px 28px -10px rgba(59, 130, 246, 0.28);
+        }
+        .scenario-btn.selected {
+            border-color: var(--accent-blue);
+            background: linear-gradient(180deg, rgba(59, 130, 246, 0.16), rgba(17, 24, 39, 0.92));
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+        }
         .scenario-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .scenario-badge {
             align-self: flex-start;
             font-size: 10.5px;
-            font-weight: 700;
-            padding: 3px 7px;
-            border-radius: 5px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
             text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
-        .badge-neutral { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; }
-        .badge-green { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
-        .badge-blue { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+        .badge-neutral { background: rgba(239, 68, 68, 0.16); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-green { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-blue { background: rgba(59, 130, 246, 0.18); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.35); }
 
-        .scenario-title { font-size: 14px; font-weight: 700; }
-        .scenario-desc { font-size: 12px; color: var(--text-muted); }
+        .scenario-title { font-size: 13.5px; font-weight: 800; line-height: 1.35; }
+        .scenario-desc { font-size: 11.8px; color: var(--text-muted); line-height: 1.45; }
 
         /* MAIN SPLIT: Log on Left, Test Case & Bug Detector on Right */
         .split-execution {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.05fr 0.95fr;
             gap: 18px;
             margin-bottom: 20px;
         }
 
         .console-panel, .testcase-panel {
-            background-color: var(--bg-secondary);
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 16px;
             display: flex;
             flex-direction: column;
-            height: 360px;
+            height: 390px;
             overflow: hidden;
+            box-shadow: var(--shadow-card);
         }
 
-        .console-panel { background-color: #05070e; }
+        .console-panel { background: #050811; }
 
         .panel-bar {
             display: flex;
@@ -258,12 +340,23 @@
             align-items: center;
             padding: 12px 16px;
             border-bottom: 1px solid var(--border-color);
-            font-size: 12.5px;
+            font-size: 12px;
             font-weight: 700;
             letter-spacing: 0.04em;
             text-transform: uppercase;
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.025);
         }
+
+        .win-dots {
+            display: inline-flex;
+            gap: 6px;
+            margin-right: 10px;
+            align-items: center;
+        }
+        .win-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .win-dot.r { background: #ef4444; }
+        .win-dot.y { background: #f59e0b; }
+        .win-dot.g { background: #10b981; }
 
         .console-body {
             padding: 14px 16px;
@@ -282,39 +375,48 @@
             gap: 12px;
         }
 
-        .log-entry { margin-bottom: 6px; line-height: 1.55; }
-        .log-time { color: #64748b; }
-        .log-info { color: #38bdf8; }
-        .log-success { color: #4ade80; font-weight: 600; }
-        .log-warn { color: #fbbf24; font-weight: 600; }
-        .log-error { color: #f87171; font-weight: 700; }
-        .log-compensate { color: #c084fc; font-weight: 700; background: rgba(192, 132, 252, 0.1); padding: 2px 6px; border-radius: 4px; }
+        .log-entry {
+            margin-bottom: 7px;
+            line-height: 1.55;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.015);
+            border-left: 2px solid transparent;
+        }
+        .log-time { color: #64748b; font-size: 11px; }
+        .log-info { color: #38bdf8; border-left-color: #38bdf8; }
+        .log-success { color: #4ade80; font-weight: 600; border-left-color: #4ade80; background: rgba(74, 222, 128, 0.05); }
+        .log-warn { color: #fbbf24; font-weight: 600; border-left-color: #fbbf24; background: rgba(251, 191, 36, 0.06); }
+        .log-error { color: #f87171; font-weight: 700; border-left-color: #ef4444; background: rgba(239, 68, 68, 0.09); }
+        .log-compensate { color: #c084fc; font-weight: 700; border-left-color: #c084fc; background: rgba(192, 132, 252, 0.12); }
 
         /* Test Case Verdict & Bug Alert Box */
         .testcase-panel.verdict-fail {
-            border: 1.5px solid rgba(239, 68, 68, 0.7);
+            border: 1.5px solid rgba(239, 68, 68, 0.75);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.15);
         }
 
         .testcase-panel.verdict-pass {
-            border: 1.5px solid rgba(16, 185, 129, 0.6);
+            border: 1.5px solid rgba(16, 185, 129, 0.7);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
         }
 
         .verdict-banner {
-            padding: 14px;
-            border-radius: 10px;
+            padding: 14px 16px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             background: var(--bg-card);
         }
 
         .verdict-banner.fail {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: rgba(239, 68, 68, 0.55);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.16), rgba(15, 23, 42, 0.9));
+            border-color: rgba(239, 68, 68, 0.6);
             color: #fecaca;
         }
 
         .verdict-banner.pass {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(15, 23, 42, 0.9));
+            border-color: rgba(16, 185, 129, 0.55);
             color: #a7f3d0;
         }
 
@@ -325,19 +427,21 @@
             font-weight: 800;
             font-size: 14px;
             margin-bottom: 6px;
+            gap: 8px;
         }
 
         .verdict-bug-tag {
             font-size: 11px;
-            padding: 3px 8px;
+            padding: 3px 9px;
             border-radius: 6px;
             font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
         }
 
         .verdict-banner.fail .verdict-bug-tag { background: var(--accent-red); color: white; }
         .verdict-banner.pass .verdict-bug-tag { background: var(--accent-green); color: #052e16; }
 
-        .verdict-explain { font-size: 13px; line-height: 1.5; }
+        .verdict-explain { font-size: 12.8px; line-height: 1.55; }
 
         .assertion-list {
             display: flex;
@@ -346,9 +450,10 @@
         }
 
         .assertion-item {
-            padding: 10px 12px;
-            border-radius: 8px;
-            background: #0f172a;
+            padding: 10px 13px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border-color);
             border-left: 4px solid var(--border-color);
             font-size: 12.5px;
         }
@@ -363,15 +468,19 @@
             background: rgba(16, 185, 129, 0.07);
         }
 
-        .assertion-title { font-weight: 700; display: flex; justify-content: space-between; }
+        .assertion-title { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
         .assertion-detail { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
 
         /* Live State Grid */
         .grid-2col {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.15fr 0.85fr;
             gap: 18px;
             margin-bottom: 18px;
+        }
+
+        @media (max-width: 1200px) {
+            .scenarios-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         }
 
         @media (max-width: 980px) {
@@ -382,10 +491,12 @@
         }
 
         .state-panel {
-            background-color: var(--bg-secondary);
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 16px;
+            padding: 16px 18px;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(12px);
         }
 
         .panel-header {
@@ -393,25 +504,43 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 14px;
         }
 
         .table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-        .table th, .table td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        .table th { color: var(--text-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; }
+        .table th, .table td { padding: 10px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .table tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
+        .table th { color: var(--text-muted); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+        .price-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(59, 130, 246, 0.14);
+            color: #93c5fd;
+            display: inline-block;
+        }
+
+        .price-badge.changed {
+            background: rgba(245, 158, 11, 0.22);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #fde68a;
+        }
 
         .btn-reset {
-            background: #374151;
+            background: linear-gradient(135deg, #334155, #1e293b);
             color: white;
-            border: none;
-            padding: 7px 12px;
-            border-radius: 6px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            padding: 8px 14px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
+            transition: all 0.2s ease;
         }
-        .btn-reset:hover { background: #4b5563; }
+        .btn-reset:hover { background: linear-gradient(135deg, #475569, #334155); border-color: #93c5fd; transform: translateY(-1px); }
 
         .status-pill { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
         .status-COMPLETED { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
@@ -836,9 +965,16 @@
 <body>
 
     <div class="header">
-        <div>
+        <div class="header-brand">
+            <span class="header-eyebrow">⚡ Distributed Transactions &bull; Microservices Architecture</span>
             <h1>SAGA Pattern Microservices Live Demo</h1>
-            <p>Đối chứng Trước khi có SAGA (Data Anomalies) vs Sau khi có SAGA (Countermeasures: Compensation, Semantic Lock, Operation Log)</p>
+            <p>Đối chứng Trước khi có SAGA (4 Data Anomalies) vs Sau khi có SAGA (Countermeasures: Compensation, Semantic Lock, Operation Log, Reread Value)</p>
+            <div class="service-pills">
+                <span class="srv-pill">🎯 Orchestrator :8080</span>
+                <span class="srv-pill">📦 Order :8081</span>
+                <span class="srv-pill">🏬 Inventory :8082</span>
+                <span class="srv-pill">💳 Payment :8083</span>
+            </div>
         </div>
         <div style="display: flex; gap: 12px; align-items: center;">
             <button class="btn-reset" onclick="resetAll()">🔄 Reset Hệ Thống</button>
@@ -850,36 +986,36 @@
     <div class="mode-tabs">
         <button class="mode-tab active-before" id="tab-before" onclick="switchMode('before')">
             <div>
-                <span class="tab-title">1. TRƯỚC KHI CÓ SAGA (Naive Flow)</span>
-                <span class="tab-sub">Partial Commit, Dirty Read / Lost Update, không có Version/Operation Log</span>
+                <span class="tab-title">🚨 1. TRƯỚC KHI CÓ SAGA (Naive Flow)</span>
+                <span class="tab-sub">Partial Commit, Dirty Read, Lost Update &amp; Fuzzy Read (Không có Countermeasures)</span>
             </div>
             <span class="tab-pill">Before SAGA</span>
         </button>
 
         <button class="mode-tab" id="tab-after" onclick="switchMode('after')">
             <div>
-                <span class="tab-title">2. SAU KHI CÓ SAGA (Countermeasures)</span>
-                <span class="tab-sub">LIFO Compensation + Commutative Updates, Semantic Lock &amp; Operation Log</span>
+                <span class="tab-title">🛡️ 2. SAU KHI CÓ SAGA (Countermeasures)</span>
+                <span class="tab-sub">LIFO Compensation, Semantic Lock, Operation Log &amp; Reread Value (Optimistic Lock)</span>
             </div>
             <span class="tab-pill">After SAGA</span>
         </button>
 
         <button class="mode-tab" id="tab-docs" onclick="switchMode('docs')">
             <div>
-                <span class="tab-title">3. TÀI LIỆU THUYẾT TRÌNH (Docs)</span>
-                <span class="tab-sub">Lý thuyết SAGA, Data Anomalies, Countermeasures &amp; Hướng dẫn Implement</span>
+                <span class="tab-title">📚 3. TÀI LIỆU THUYẾT TRÌNH (Docs)</span>
+                <span class="tab-sub">Lý thuyết SAGA, 4 Test Cases đối chứng, Countermeasures &amp; Hướng dẫn Implement</span>
             </div>
             <span class="tab-pill">Docs &bull; 7 mục</span>
         </button>
     </div>
 
     <div id="demo-view">
-    <!-- WORKFLOW PIPELINE (T1 -> T2 -> T3) -->
+    <!-- WORKFLOW PIPELINE (T1 -> T2 -> T3 -> T4) -->
     <div class="diagram-section">
         <div class="diagram-title">
             <span id="pipeline-title">Naive Sequential Pipeline (Không SAGA)</span>
             <span style="font-size: 12px; color: var(--text-muted); text-transform: none;">
-                T1: Order (:8081) &rarr; T2: Inventory (:8082) &rarr; T3: Payment (:8083)
+                Forward: T1 (:8081) &rarr; T2 (:8082) &rarr; T3 (:8083) &rarr; T4 (Confirm) &nbsp;|&nbsp; Rollback: C3 &rarr; C2 &rarr; C1 (LIFO)
             </span>
         </div>
 
@@ -887,7 +1023,7 @@
             <div class="node-card" id="node-order">
                 <div class="node-icon">📦</div>
                 <div class="node-name">T1: Order Service</div>
-                <div class="node-sub">Port 8081 &bull; Create / Cancel</div>
+                <div class="node-sub">:8081 &bull; Create (PENDING) / Cancel (C1)</div>
             </div>
 
             <div class="arrow">&rarr;</div>
@@ -895,7 +1031,7 @@
             <div class="node-card" id="node-inventory">
                 <div class="node-icon">🏬</div>
                 <div class="node-name">T2: Inventory Service</div>
-                <div class="node-sub">Port 8082 &bull; Reserve / Release</div>
+                <div class="node-sub">:8082 &bull; Reserve (Lock) / Release (C2)</div>
             </div>
 
             <div class="arrow">&rarr;</div>
@@ -903,7 +1039,15 @@
             <div class="node-card" id="node-payment">
                 <div class="node-icon">💳</div>
                 <div class="node-name">T3: Payment Service</div>
-                <div class="node-sub">Port 8083 &bull; Debit / Refund</div>
+                <div class="node-sub">:8083 &bull; Reread &amp; Debit / Refund (C3)</div>
+            </div>
+
+            <div class="arrow">&rarr;</div>
+
+            <div class="node-card" id="node-confirm">
+                <div class="node-icon">✅</div>
+                <div class="node-name">T4: Confirm &amp; Finalize</div>
+                <div class="node-sub">:8080 &bull; Unlock Stock &amp; Complete</div>
             </div>
         </div>
     </div>
@@ -916,18 +1060,21 @@
         <!-- LEFT: Execution Log -->
         <div class="console-panel">
             <div class="panel-bar">
-                <span id="console-header-title" style="color: #93c5fd;">Execution Log</span>
-                <button class="btn-reset" onclick="clearLogs()" style="padding: 3px 9px; font-size: 11px;">Clear</button>
+                <span style="display: inline-flex; align-items: center;">
+                    <span class="win-dots"><span class="win-dot r"></span><span class="win-dot y"></span><span class="win-dot g"></span></span>
+                    <span id="console-header-title" style="color: #93c5fd;">Execution Log</span>
+                </span>
+                <button class="btn-reset" onclick="clearLogs()" style="padding: 4px 10px; font-size: 11px;">Clear</button>
             </div>
             <div class="console-body" id="console-logs">
-                <div class="log-entry log-info">Ready. Chọn chế độ và bấm 1 Test Case ở trên để chạy.</div>
+                <div class="log-entry log-info">Ready. Chọn chế độ và bấm 1 trong 5 kịch bản ở trên để chạy kiểm chứng.</div>
             </div>
         </div>
 
         <!-- RIGHT: Automated Test Case & Bug Detector -->
         <div class="testcase-panel" id="testcase-panel">
             <div class="panel-bar">
-                <span id="testcase-header-title">🧪 Test Case &amp; Bug Detector (Bên Phải)</span>
+                <span id="testcase-header-title">🧪 Test Case &amp; Bug Detector (Automated Assertions)</span>
                 <span id="testcase-status-pill" class="status-pill" style="background:#374151;color:#d1d5db;">CHƯA CHẠY</span>
             </div>
             <div class="testcase-body" id="testcase-body">
@@ -936,8 +1083,8 @@
                         <span>Sẵn sàng kiểm chứng Test Case</span>
                     </div>
                     <div class="verdict-explain" style="color: var(--text-muted);">
-                        Khi bấm chạy một kịch bản ở trên, panel này sẽ kiểm tra trực tiếp dữ liệu thật từ <b>Order (:8081)</b>, <b>Inventory (:8082)</b> và <b>Payment (:8083)</b>.
-                        Nếu phát hiện sai lệch dữ liệu ở chế độ <b>TRƯỚC SAGA</b>, hệ thống sẽ tự báo mã Bug và tô <span style="color:var(--accent-red);font-weight:700;">ĐỎ</span>.
+                        Khi bấm chạy một kịch bản ở trên, panel này sẽ đối chiếu dữ liệu thật từ <b>Order (:8081)</b>, <b>Inventory (:8082)</b> và <b>Payment (:8083)</b>.
+                        Nếu phát hiện bất thường dữ liệu (<i>Partial Commit, Dirty Read, Lost Update, Fuzzy Read</i>) ở chế độ <b>TRƯỚC SAGA</b>, hệ thống sẽ tự báo mã Bug và tô <span style="color:var(--accent-red);font-weight:700;">ĐỎ</span>.
                     </div>
                 </div>
             </div>
@@ -948,20 +1095,21 @@
     <div class="grid-2col">
         <div class="state-panel">
             <div class="panel-header">
-                <span>🏬 Trạng Thái Kho (Inventory Service)</span>
-                <span style="font-size: 12px; color: var(--accent-blue);">REST :8082</span>
+                <span>🏬 Trạng Thái Kho &amp; Đơn Giá (Inventory Service)</span>
+                <span style="font-size: 12px; color: var(--accent-blue); font-family: 'JetBrains Mono', monospace;">REST :8082</span>
             </div>
             <table class="table">
                 <thead>
                     <tr>
                         <th>Mã SP</th>
                         <th>Tên Sản Phẩm</th>
+                        <th>Đơn Giá</th>
                         <th>Khả Dụng</th>
                         <th>Đang Giữ (Lock)</th>
                     </tr>
                 </thead>
                 <tbody id="inventory-table-body">
-                    <tr><td colspan="4" style="text-align:center;">Đang tải...</td></tr>
+                    <tr><td colspan="5" style="text-align:center;">Đang tải...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -969,7 +1117,7 @@
         <div class="state-panel">
             <div class="panel-header">
                 <span>💳 Ví Khách Hàng (Payment Service)</span>
-                <span style="font-size: 12px; color: var(--accent-blue);">REST :8083</span>
+                <span style="font-size: 12px; color: var(--accent-blue); font-family: 'JetBrains Mono', monospace;">REST :8083</span>
             </div>
             <table class="table">
                 <thead>
@@ -1090,12 +1238,21 @@
                 afterDesc: 'Lưu vết orderId vào Operation Log: retry đè vào sẽ bị chặn lại, chỉ trừ tiền & kho đúng 1 lần.'
             },
             {
+                id: 'case4',
+                beforeBadge: 'BUG-4 • Fuzzy Read',
+                beforeTitle: '4. Fuzzy Read (Đọc 2 lần ra 2 giá khác nhau)',
+                beforeDesc: 'Bước 1 đọc giá $1,000 tạo Order; giữa chừng giá đổi thành $1,500 -> Bước 3 đọc lại trừ ví $1,500 (lệch $500)!',
+                afterBadge: 'Countermeasure 4 • Reread Value',
+                afterTitle: '4. Vá Fuzzy Read (Reread Value / Optimistic)',
+                afterDesc: 'Đọc lại & đối chiếu giá Snapshot trước khi trừ tiền: phát hiện giá đổi ($1,000 -> $1,500) -> chặn trừ tiền & bù trừ LIFO.'
+            },
+            {
                 id: 'happy',
                 beforeBadge: 'Baseline • Thành công',
-                beforeTitle: 'Happy Path (Đủ hàng & tiền)',
+                beforeTitle: '5. Happy Path (Đủ hàng & tiền)',
                 beforeDesc: 'CUST-RICH mua MacBook ($2,000). Cả 2 chế độ đều thành công.',
                 afterBadge: 'Baseline • Happy Path',
-                afterTitle: 'Happy Path (Đủ hàng & tiền)',
+                afterTitle: '5. Happy Path (Đủ hàng & tiền)',
                 afterDesc: 'T1 Order -> T2 Inventory -> T3 Payment -> T4 Confirm COMPLETED.'
             }
         ];
@@ -1128,9 +1285,9 @@
 
             const pipelineTitle = document.getElementById('pipeline-title');
             pipelineTitle.textContent = mode === 'before'
-                ? 'Naive Sequential Pipeline (Trước SAGA)'
-                : 'SAGA Orchestrator Pipeline (Sau SAGA — Countermeasures)';
-            pipelineTitle.style.color = 'var(--accent-blue)';
+                ? '🚨 Naive Sequential Pipeline (Trước SAGA — Không có Countermeasures)'
+                : '🛡️ SAGA Orchestrator Pipeline (Sau SAGA — 4 Countermeasures Bảo Vệ)';
+            pipelineTitle.style.color = mode === 'before' ? '#fca5a5' : '#6ee7b7';
 
             if (modeChanged) {
                 selectedTestId = null;
@@ -1139,7 +1296,7 @@
                 resetTestCasePanel();
                 clearLogs();
                 appendLog(mode === 'before'
-                    ? 'Mode: BEFORE SAGA. Chọn 1 trong 3 Test Cases (Data Anomalies) hoặc Happy Path.'
+                    ? 'Mode: BEFORE SAGA. Chọn 1 trong 4 Test Cases (Partial Commit, Dirty Read, Lost Update, Fuzzy Read) hoặc Happy Path.'
                     : 'Mode: AFTER SAGA. Chọn lại từng Test Case để kiểm chứng Countermeasures vá lỗi.',
                     'info', 'INFO ', 'dashboard');
             }
@@ -1153,9 +1310,10 @@
             grid.innerHTML = TEST_CASES.map(tc => {
                 const isHappy = tc.id === 'happy';
                 const badgeClass = isHappy ? 'badge-blue' : (isBefore ? 'badge-neutral' : 'badge-green');
+                const cardVariant = isHappy ? ' card-happy' : (isBefore ? ' card-before' : ' card-after');
                 const selectedClass = selectedTestId === tc.id ? ' selected' : '';
                 return `
-                    <button class="scenario-btn${selectedClass}" ${isRunning ? 'disabled' : ''} onclick="runTestCase('${tc.id}')">
+                    <button class="scenario-btn${cardVariant}${selectedClass}" ${isRunning ? 'disabled' : ''} onclick="runTestCase('${tc.id}')">
                         <span class="scenario-badge ${badgeClass}">${isBefore ? tc.beforeBadge : tc.afterBadge}</span>
                         <span class="scenario-title">${isBefore ? tc.beforeTitle : tc.afterTitle}</span>
                         <span class="scenario-desc">${isBefore ? tc.beforeDesc : tc.afterDesc}</span>
@@ -1220,16 +1378,27 @@
         function renderInventory(items) {
             const tbody = document.getElementById('inventory-table-body');
             if (!items || items.length === 0) return;
-            tbody.innerHTML = items.map(item => `
-                <tr>
-                    <td><strong>${item.productId}</strong></td>
-                    <td>${item.productName}</td>
-                    <td style="color: ${item.availableStock > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight:700;">
-                        ${item.availableStock}
-                    </td>
-                    <td style="color: var(--accent-yellow); font-weight:700;">${item.reservedStock}</td>
-                </tr>
-            `).join('');
+            const defaultPrices = { 'PROD-001': 2000, 'PROD-002': 1000, 'PROD-OUT-OF-STOCK': 700 };
+            tbody.innerHTML = items.map(item => {
+                const priceVal = item.price !== undefined && item.price !== null ? Number(item.price) : (defaultPrices[item.productId] || 0);
+                const basePrice = defaultPrices[item.productId] || priceVal;
+                const isChanged = Math.abs(priceVal - basePrice) > 0.01;
+                return `
+                    <tr>
+                        <td><strong>${item.productId}</strong></td>
+                        <td>${item.productName}</td>
+                        <td>
+                            <span class="price-badge${isChanged ? ' changed' : ''}">
+                                $${priceVal.toLocaleString('en-US', {minimumFractionDigits: 2})}${isChanged ? ' ⚡ Đã đổi' : ''}
+                            </span>
+                        </td>
+                        <td style="color: ${item.availableStock > 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; font-weight:700;">
+                            ${item.availableStock}
+                        </td>
+                        <td style="color: var(--accent-yellow); font-weight:700;">${item.reservedStock}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderWallets(wallets) {
@@ -1269,7 +1438,7 @@
         }
 
         function resetNodeHighlights() {
-            ['node-order', 'node-inventory', 'node-payment'].forEach(id => {
+            ['node-order', 'node-inventory', 'node-payment', 'node-confirm'].forEach(id => {
                 const n = document.getElementById(id);
                 if (n) n.className = 'node-card';
             });
@@ -1370,6 +1539,9 @@
                 } else if (caseId === 'case3') {
                     payload = { customerId: 'CUST-RICH', productId: 'PROD-001', quantity: 1, amount: 2000.00 };
                     url = isBefore ? `${API_BASE}/orders/without-saga?mode=duplicate_request` : `${API_BASE}/orders/duplicate-check`;
+                } else if (caseId === 'case4') {
+                    payload = { customerId: 'CUST-RICH', productId: 'PROD-002', quantity: 1, amount: 1000.00 };
+                    url = isBefore ? `${API_BASE}/orders/without-saga?mode=fuzzy_read` : `${API_BASE}/orders/fuzzy-read-check`;
                 } else if (caseId === 'happy') {
                     payload = { customerId: 'CUST-RICH', productId: 'PROD-001', quantity: 1, amount: 2000.00 };
                     url = isBefore ? `${API_BASE}/orders/without-saga?mode=partial_commit` : `${API_BASE}/orders`;
@@ -1508,6 +1680,41 @@
                 };
             }
 
+            if (caseId === 'case4') {
+                const walletDeducted = bWal.balance - aWal.balance;
+                const orderStatus = aOrd ? aOrd.status : orderRes.status;
+                const orderRecordedAmount = aOrd ? Number(aOrd.amount) : Number(payload.amount);
+                const rereadProtected = (orderStatus === 'CANCELLED' && Math.abs(walletDeducted) < 0.01)
+                    || (orderStatus === 'COMPLETED' && Math.abs(walletDeducted - orderRecordedAmount) < 0.01);
+                const stockConsistent = aProd.availableStock === bProd.availableStock && aProd.reservedStock === 0;
+
+                assertions.push({
+                    title: 'Chống Fuzzy Read giữa Bước 1 (Order) và Bước 3 (Payment): Reread Value đối chiếu giá Snapshot',
+                    pass: rereadProtected,
+                    detail: rereadProtected
+                        ? `Read #1 ($${orderRecordedAmount.toFixed(2)}) != Reread #2 ($${Number(aProd.price || 1500).toFixed(2)}) -> Reread Value chặn thanh toán lệch giá! Ví trừ: $${walletDeducted.toFixed(2)}, Order=${orderStatus}`
+                        : `Read #1 (Order) ghi $${orderRecordedAmount.toFixed(2)} nhưng Read #2 (Payment) đọc giá mới $${Number(aProd.price || 1500).toFixed(2)} và trừ ví $${walletDeducted.toFixed(2)} (Lệch $${Math.abs(walletDeducted - orderRecordedAmount).toFixed(2)})!`
+                });
+                assertions.push({
+                    title: 'Khi phát hiện giá bị sửa giữa chừng: Phải hủy đơn & hoàn trả tồn kho (LIFO Compensation)',
+                    pass: stockConsistent && orderStatus === 'CANCELLED',
+                    detail: `Expected Order=CANCELLED, available=${bProd.availableStock}, reserved=0 | Actual Order=${orderStatus}, available=${aProd.availableStock}, reserved=${aProd.reservedStock}`
+                });
+
+                const ok = rereadProtected && stockConsistent && orderStatus === 'CANCELLED';
+                return {
+                    ok,
+                    tag: ok ? 'PASS • REREAD VALUE' : 'FUZZY READ DETECTED',
+                    headline: ok
+                        ? 'Đã vá Fuzzy Read bằng Reread Value(s) (Optimistic Offline Lock) + LIFO Compensation'
+                        : 'PHÁT HIỆN BUG-4: Fuzzy (Nonrepeatable) Read — Đọc 2 lần ra 2 giá khác nhau!',
+                    explain: ok
+                        ? `Bước 1 khóa giá Snapshot $${orderRecordedAmount.toFixed(2)}. Giữa chừng giao dịch khác đổi giá lên $${Number(aProd.price || 1500).toFixed(2)}. Trước khi trừ tiền, Reread Value phát hiện giá đã bị thay đổi nên chặn thanh toán và chạy LIFO Compensation (nhả kho về ${aProd.availableStock}, hủy đơn CANCELLED, ví giữ nguyên $${aWal.balance.toFixed(2)}).`
+                        : `Bước 1 tạo Order với giá $${orderRecordedAmount.toFixed(2)} (Read #1). Giữa chừng giá bị sửa thành $${Number(aProd.price || 1500).toFixed(2)}. Bước 3 đọc lại (Read #2) mà không đối chiếu Snapshot nên trừ ví khách $${walletDeducted.toFixed(2)} trong khi đơn hàng ghi $${orderRecordedAmount.toFixed(2)}!`,
+                    assertions
+                };
+            }
+
             const completed = orderRes.status === 'COMPLETED' && aProd.availableStock === bProd.availableStock - 1;
             assertions.push({
                 title: 'Đơn hoàn tất (COMPLETED) & Kho/Ví trừ khớp nhau',
@@ -1529,18 +1736,23 @@
                     highlightNode('node-order', 'success');
                     highlightNode('node-inventory', 'success');
                     highlightNode('node-payment', 'success');
-                } else if (caseId === 'case1') {
+                    highlightNode('node-confirm', 'success');
+                } else if (caseId === 'case1' || caseId === 'case4') {
                     highlightNode('node-order', 'compensating');
                     highlightNode('node-inventory', 'compensating');
                     highlightNode('node-payment', 'error');
+                    highlightNode('node-confirm', 'compensating');
                 }
             } else {
                 highlightNode('node-order', 'active');
                 if (caseId === 'case2') {
                     highlightNode('node-inventory', 'error');
+                    highlightNode('node-payment', 'active');
+                    highlightNode('node-confirm', 'active');
                 } else {
                     highlightNode('node-inventory', 'active');
                     highlightNode('node-payment', 'error');
+                    highlightNode('node-confirm', 'error');
                 }
             }
         }
@@ -1834,8 +2046,8 @@ Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────
                                 </tr>
                                 <tr>
                                     <td><strong>5. Reread Value(s)</strong></td>
-                                    <td>Đọc lại dữ liệu ngay trước khi ghi đè (một dạng <strong>Optimistic Offline Lock</strong>) để xác nhận giá trị chưa bị Saga khác sửa đổi; nếu đã đổi thì dừng và khởi động lại Saga &rarr; chủ yếu chống <strong>Lost Updates</strong> (ngăn dirty writes; cũng hỗ trợ phát hiện <strong>Fuzzy Reads</strong>).</td>
-                                    <td><em>Ghi chú lý thuyết (mở rộng khi dùng DB/Version).</em></td>
+                                    <td>Đọc lại dữ liệu ngay trước khi ghi đè (một dạng <strong>Optimistic Offline Lock</strong>) để xác nhận giá trị chưa bị Saga khác sửa đổi; nếu đã đổi thì dừng và khởi động lại Saga &rarr; chống <strong>Fuzzy Reads</strong> &amp; <strong>Lost Updates</strong>.</td>
+                                    <td><span class="doc-tag-fix">Có (Case 4)</span> Đọc lại giá sản phẩm trước khi trừ tiền; nếu khác giá Snapshot ban đầu thì hủy đơn &amp; bù trừ LIFO.</td>
                                 </tr>
                                 <tr>
                                     <td><strong>6. Risk-based Concurrency (By Value)</strong></td>
@@ -1852,12 +2064,12 @@ Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────
             {
                 id: '03-golden-rules',
                 num: '03',
-                title: '3 Test Cases Đối Chứng',
+                title: '4 Test Cases Đối Chứng',
                 sub: 'Before vs After Mapping',
                 file: 'docs/03-golden-rules.md',
                 html: `
-                    <h1>3. 3 Test Cases Đối Chứng: Data Anomalies (Trước) vs Countermeasures (Sau)</h1>
-                    <p>Bám sát tài liệu chuẩn ở <button class="doc-link-btn" onclick="selectDoc('01-problem-context')">01-problem-context.md</button> và <button class="doc-link-btn" onclick="selectDoc('02-saga-pattern')">02-saga-pattern.md</button>, code demo chứng minh trực tiếp <strong>3 cặp đối chứng</strong> (cùng nút <strong>Happy Path</strong>):</p>
+                    <h1>3. 4 Test Cases Đối Chứng: Data Anomalies (Trước) vs Countermeasures (Sau)</h1>
+                    <p>Bám sát tài liệu chuẩn ở <button class="doc-link-btn" onclick="selectDoc('01-problem-context')">01-problem-context.md</button> và <button class="doc-link-btn" onclick="selectDoc('02-saga-pattern')">02-saga-pattern.md</button>, code demo chứng minh trực tiếp <strong>4 cặp đối chứng</strong> (cùng nút <strong>Happy Path</strong>):</p>
 
                     <div class="doc-table-wrap">
                         <table class="doc-table">
@@ -1888,6 +2100,12 @@ Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────
                                     <td><span class="doc-tag-fix">Version File / Operation Log <em>(Idempotency)</em></span><br>Lưu trạng thái từng <code>orderId</code> vào Operation Log (<code>RESERVED</code>, <code>CONFIRMED</code>, <code>COMPENSATED</code>, <code>DEBITED</code>, <code>REFUNDED</code>) để chặn retry ghi đè. Gọi <em>N</em> lần vẫn chỉ trừ tiền đúng 1 lần.</td>
                                     <td><code>Rule3_InventoryIdempotencyTest</code>, <code>Rule3_PaymentIdempotencyTest</code></td>
                                 </tr>
+                                <tr>
+                                    <td><strong>Case 4</strong></td>
+                                    <td><span class="doc-tag-bug">BUG-4: Fuzzy (Nonrepeatable) Read</span><br>Bước 1 đọc giá <code>$1,000</code> tạo Order; giữa chừng giao dịch khác sửa giá lên <code>$1,500</code>; Bước 3 đọc lại giá mới và trừ ví khách <code>$1,500</code> &rarr; Order lưu <code>$1,000</code> nhưng Ví mất <code>$1,500</code>!</td>
+                                    <td><span class="doc-tag-fix">Reread Value(s) <em>(Optimistic Offline Lock)</em></span><br>Đọc lại giá sản phẩm trước khi trừ tiền và đối chiếu với giá Snapshot đầu phiên; phát hiện giá đã bị thay đổi (<code>$1,000 != $1,500</code>) &rarr; chặn thanh toán &amp; chạy bù trừ LIFO.</td>
+                                    <td><code>WithoutSagaProblemsTest</code>, <code>Rule4_FuzzyReadRereadValueTest</code></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1915,6 +2133,12 @@ Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────
                         <li><strong>Lưu ý phân biệt lý thuyết vs Demo:</strong> <em>Version File</em> theo định nghĩa gốc của Saga dùng để ghi lại các thao tác trên bản ghi nhằm sắp xếp lại đúng thứ tự thực thi (chống xung đột thứ tự); Demo mở rộng áp dụng Operation Log theo <code>orderId</code> để đảm bảo <strong>Idempotency</strong> khi mạng retry.</li>
                     </ul>
 
+                    <h3>Case 4 — Fuzzy (Nonrepeatable) Read vs Reread Value(s)</h3>
+                    <ul>
+                        <li><strong>Trước SAGA (<code>POST /api/orders/without-saga?mode=fuzzy_read</code>):</strong> Bước 1 đọc giá <code>PROD-002 = $1,000</code> (Read #1) để tạo Order. Giữa chừng giao dịch khác cập nhật giá lên <code>$1,500</code>. Bước 3 đọc lại giá (Read #2 = <code>$1,500</code>) mà không kiểm tra đối chiếu với Read #1, trừ thẳng ví khách <code>$1,500</code> &rarr; Đơn hàng ghi <code>$1,000</code> nhưng ví mất <code>$1,500</code>.</li>
+                        <li><strong>Sau SAGA (<code>POST /api/orders/fuzzy-read-check</code>):</strong> Orchestrator áp dụng <strong>Reread Value(s)</strong> trước khi thanh toán: đọc lại giá từ Inventory và đối chiếu với <code>snapshotPrice ($1,000)</code>. Khi phát hiện giá đã bị thay đổi thành <code>$1,500</code>, Orchestrator chặn thanh toán lệch giá và kích hoạt <code>abort()</code> chạy bù trừ LIFO (nhả kho về <code>5</code>, hủy đơn <code>CANCELLED</code>, bảo toàn ví khách hàng <code>$5,000</code>).</li>
+                    </ul>
+
                     <hr>
 
                     <h2>Ghi chú thiết kế đi kèm (Pessimistic View &amp; Resilience)</h2>
@@ -1931,6 +2155,8 @@ Chiều lùi (Compensate):   C1 (Cancel) ◀── C2 (Release)  ◀────
                         <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case2')">After: Case 2 (Fix)</button>
                         <button class="btn-doc-jump" onclick="jumpAndRunCase('before', 'case3')">Before: Case 3 (Bug-3)</button>
                         <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case3')">After: Case 3 (Fix)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('before', 'case4')">Before: Case 4 (Fuzzy Read)</button>
+                        <button class="btn-doc-jump" onclick="jumpAndRunCase('after', 'case4')">After: Case 4 (Reread Value)</button>
                     </div>
                 `
             },
